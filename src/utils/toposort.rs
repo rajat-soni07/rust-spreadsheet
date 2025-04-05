@@ -14,7 +14,6 @@ pub fn topo_sort(adj: &Vec<Vec<i32>>,cell:i32, indegree: &mut Vec<i32>) -> Vec<i
             }
             indegree[*c as usize]+=1;
         }
-
     }
 
     let mut res: Vec<i32> = vec![0; ct as usize];q.push_back(cell);
