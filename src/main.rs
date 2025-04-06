@@ -1,5 +1,7 @@
 use std::os::windows::io::RawSocket;
 
+use utils::input;
+
 mod utils;
 
 struct OPS {
@@ -11,21 +13,33 @@ struct OPS {
 fn cell_to_int(a: &str) -> i32{
     let mut col = 0;
     let mut b = a.chars();
-
-    while let Some(c) = b.next() {
-        let diff = c as i32 - 'A' as i32 + 1;
-        if 1<=diff && diff<=26 {
-            col *= 26;
-            col += diff;
+    let mut part = 0;
+    for c in b.clone(){
+        if c.is_alphabetic() {
+            part += 1;
         } else {
             break;
         }
     }
 
-    let row: i32 = b.collect::<String>().parse().unwrap_or(0);
+    for i in a[..part].chars() {
+        let diff = i as i32 - 'A' as i32 + 1;
+        
+        
+        if 1<=diff && diff<=26 {
+            col *= 26;
+            col += diff;
+        } else {
+            
+            break;
+        }
+    }
+    
+    let row: i32 = a[part..].parse().unwrap_or(0);
 
     col * 1000 + row
-    }
+}
+
 
 
 fn int_to_ind(a: i32,len_h: i32)->i32{
