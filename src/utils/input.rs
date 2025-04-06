@@ -1,5 +1,3 @@
-use std::cell;
-
 use regex::Regex;
 
 
@@ -10,7 +8,7 @@ fn is_integer(inp: &String) -> bool {
 
 fn cell_to_int(a: &str) -> i32{
     let mut col = 0;
-    let mut b = a.chars();
+    let b = a.chars();
     let mut part = 0;
     for c in b.clone(){
         if c.is_alphabetic() {

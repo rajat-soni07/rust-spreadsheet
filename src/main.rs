@@ -1,6 +1,5 @@
 use std::io;
-
-use utils::{display, input};
+use std::io::Write;
 
 mod utils;
 
@@ -27,16 +26,10 @@ fn max(a: i32, b: i32) -> i32 {
     }
 }
 
-fn min(a: i32, b: i32) -> i32 {
-    if a < b {
-        a
-    } else {
-        b
-    }
-}
+
 fn cell_to_int(a: &str) -> i32{
     let mut col = 0;
-    let mut b = a.chars();
+    let b = a.chars();
     let mut part = 0;
     for c in b.clone(){
         if c.is_alphabetic() {
@@ -454,7 +447,8 @@ fn non_ui() {
 
     
     loop{
-        println!("[{}] ({}) > ",0,status);
+        print!("[{}] ({}) > ",0,status);
+        io::stdout().flush().unwrap();
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Failed to read line");
         let input = input.trim_end().to_string();
@@ -487,7 +481,7 @@ fn non_ui() {
                 if status == "ok" {
                     if out[1] == "SRL"{
                         let t = cell_to_ind(out[0].as_str(), len_h);
-                        let mut x1 = t%len_h; if (x1==0){x1=len_h;}
+                        let mut x1 = t%len_h; if x1==0{x1=len_h;}
                         let y1 = t/len_h + ((x1!=len_h) as i32);
                         curr_h = x1; curr_v = y1;
                                                
