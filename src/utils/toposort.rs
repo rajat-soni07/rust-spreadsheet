@@ -17,7 +17,6 @@ pub fn topo_sort(adj: &Vec<Vec<i32>>,cell:i32, indegree: &mut Vec<i32>) -> Vec<i
     }
 
     let mut res: Vec<i32> = vec![0; ct as usize];q.push_back(cell);
-    while q.len()>0 {q.pop_front();}
     if is_cycle==1{
         res[0]=-1;
         // we need to revert back changes in indegree
@@ -32,11 +31,13 @@ pub fn topo_sort(adj: &Vec<Vec<i32>>,cell:i32, indegree: &mut Vec<i32>) -> Vec<i
 
             }
         }
+        return res;
     }
     res[0]=ct-1; let mut leng=1;
 
     while q.len()>0{
         let node = q.pop_front().unwrap();
+        // print!("{} ",node);
         res[leng as usize]=node;leng+=1;
         for c in &adj[node as usize]{
             indegree[*c as  usize]-=1;
@@ -47,5 +48,7 @@ pub fn topo_sort(adj: &Vec<Vec<i32>>,cell:i32, indegree: &mut Vec<i32>) -> Vec<i
         }
 
     }
-    res
+    return res;
 }
+
+
