@@ -1,4 +1,4 @@
-fn min(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn min(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
@@ -19,7 +19,7 @@ fn min(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,d
 
 }
 
-fn max(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn max(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
@@ -40,7 +40,7 @@ fn max(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,d
 
 }
 
-fn sum(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn sum(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
@@ -60,7 +60,7 @@ fn sum(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,d
 }
 
 
-fn avg(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn avg(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
@@ -80,7 +80,7 @@ fn avg(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,d
 
 }
 
-fn stdev(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn stdev(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}

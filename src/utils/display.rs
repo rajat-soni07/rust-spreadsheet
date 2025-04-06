@@ -23,7 +23,7 @@ fn get_label(a : i32)-> String{
     temp
 }
 
-pub fn display_grid(top_h: i32,top_v: i32,len_h: i32, len_v:i32, database: &Vec<i32>){
+pub fn display_grid(top_h: i32,top_v: i32,len_h: i32, len_v:i32, database: &Vec<i32>, err: &Vec<bool>){
     let i1 = top_h;
     let mut i2 = top_h + 9;
 
@@ -43,8 +43,11 @@ pub fn display_grid(top_h: i32,top_v: i32,len_h: i32, len_v:i32, database: &Vec<
     for j in i3..=i4 {
         print!("{j}");
         for i in i1..=i2{
+            if err[((j-1)*len_h + i) as usize] {
+                print!("\tERR");
+            }else{
             print!("\t{}",database[((j-1)*len_h + i) as usize]);
-        }
+        }}
         println!();
     }
 
