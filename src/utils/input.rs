@@ -73,7 +73,7 @@ fn is_valid_range(cell1 : &String, cell2 : &String, n_rows:i32, n_cols:i32) -> b
     return false;
 }
 
-fn input(inp: &String,n_rows:i32,n_cols:i32) -> Vec<String> {
+pub fn input(inp: &String,n_rows:i32,n_cols:i32) -> Vec<String> {
 
     // () used in regex for capture
     let mut output: Vec<String>=Vec::new();

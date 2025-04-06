@@ -1,6 +1,6 @@
-use std::os::windows::io::RawSocket;
+use std::io;
 
-use utils::input;
+use utils::{display, input};
 
 mod utils;
 
@@ -9,7 +9,31 @@ struct OPS {
     cell1: i32,
     cell2: i32,
 }
+impl Clone for OPS {
+    fn clone(&self) -> Self {
+        OPS {
+            opcpde: self.opcpde.clone(),
+            cell1: self.cell1,
+            cell2: self.cell2,
+        }
+    }
+}
 
+fn max(a: i32, b: i32) -> i32 {
+    if a > b {
+        a
+    } else {
+        b
+    }
+}
+
+fn min(a: i32, b: i32) -> i32 {
+    if a < b {
+        a
+    } else {
+        b
+    }
+}
 fn cell_to_int(a: &str) -> i32{
     let mut col = 0;
     let mut b = a.chars();
@@ -171,7 +195,7 @@ fn val_update(topo_arr : &Vec<i32>,database: &mut Vec<i32>,opers: &Vec<OPS>,len_
     }
 }
 
-fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<Vec<i32>> , opers: &mut Vec<OPS>,len_h: i32,indegree : &mut Vec<i32>, err: &mut Vec<bool>){
+fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<Vec<i32>> , opers: &mut Vec<OPS>,len_h: i32,indegree : &mut Vec<i32>, err: &mut Vec<bool>)->i32{
     let target = cell_to_ind(&inp_arr[0],len_h);
     let target = target as usize;
     // Storing temporary value of opers in case a cycle is present
@@ -399,9 +423,12 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         opers[target] = OPS{
             opcpde: rev.opcpde.clone(),
             ..rev
-        }
+        };
+
+        return 0;
     } else {
         val_update(&topo, database, opers, len_h, err);
+        return  1;
     }
 
 
@@ -414,7 +441,74 @@ fn non_ui() {
     let len_v: i32 = 10;
     let mut database = vec![0; (len_h * len_v + 1) as usize];
     let mut err = vec![false; (len_h * len_v + 1) as usize];
-    utils::display::display_grid(1, 1, len_h, len_v, &database, &err);
+    let mut opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
+    let mut indegree = vec![0; (len_h * len_v + 1) as usize];
+    let mut sensi = vec![Vec::<i32>::new();(len_h * len_v + 1) as usize];
+
+    let mut curr_h = 1;
+    let mut curr_v = 1;
+    let mut status = String::from("ok");
+    let mut dis = false;
+
+    utils::display::display_grid(curr_h, curr_v, len_h, len_v, &database, &err);
+
+    
+    loop{
+        println!("[{}] ({}) > ",0,status);
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("Failed to read line");
+        let input = input.trim_end().to_string();
+
+        match input.as_str() {
+            "w" => {
+                curr_v = max(1,curr_v-10);
+            },
+            "a" => {
+                curr_h = max(1,curr_h-10);
+            },
+            "s" => {
+                if curr_v+10>len_v{curr_v = len_v - 9}else{curr_v = curr_v +10}
+            },
+            "d" => {
+                if curr_h+10>len_h{curr_h = len_h - 9}else{curr_h = curr_h +10}
+            },
+            "q" => {
+                break;
+            },
+            "disable_output" => {
+                dis = true;
+            },
+            "enable_output" => {
+                dis = false;
+            },
+            _ => {
+                let out = utils::input::input(&input, len_h, len_v);
+                status = out[4].clone();
+                if status == "ok" {
+                    if out[1] == "SRL"{
+                        let t = cell_to_ind(out[0].as_str(), len_h);
+                        let mut x1 = t%len_h; if (x1==0){x1=len_h;}
+                        let y1 = t/len_h + ((x1!=len_h) as i32);
+                        curr_h = x1; curr_v = y1;
+                                               
+                    }
+                    else{
+                        let suc = cell_update(&out, &mut database, &mut sensi, &mut opers, len_h, &mut indegree, &mut err);
+                        if suc==0{
+                            status = "cycle_detected".to_string();
+                        }
+                    }
+                }
+            }
+        }
+
+        if dis{
+            continue;
+        }else{
+            utils::display::display_grid(curr_h, curr_v, len_h, len_v, &database, &err);
+        }
+    }
+
 }
 
 fn main() {
