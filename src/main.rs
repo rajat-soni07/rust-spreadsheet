@@ -1,6 +1,5 @@
 use std::io;
 use std::io::Write;
-
 mod utils;
 
 struct OPS {
@@ -505,6 +504,11 @@ fn non_ui() {
 
 }
 
+
+fn ui(){
+    utils::ui::ui::run();
+}
+
 fn main() {
-    non_ui();
+    ui();
 }
