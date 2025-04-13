@@ -1,5 +1,7 @@
 use std::io;
 use std::io::Write;
+
+use egui::accesskit::TreeUpdate;
 mod utils;
 
 struct OPS {
@@ -55,8 +57,6 @@ fn cell_to_int(a: &str) -> i32{
 
     col * 1000 + row
 }
-
-
 
 fn int_to_ind(a: i32,len_h: i32)->i32{
     (a/1000) + (a%1000 -1)*len_h
@@ -505,8 +505,30 @@ fn non_ui() {
 }
 
 
-fn ui(){
-    utils::ui::ui::run();
+fn ui() -> eframe::Result {
+    
+    let len_h: i32 = 100;
+    let len_v: i32 = 100;
+    let mut database = vec![0; (len_h * len_v + 1) as usize];
+    let mut err = vec![false; (len_h * len_v + 1) as usize];
+    let mut top_h = 1;
+    let mut top_v = 1;
+    database[111] = 10;
+    err[1] = true;
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_inner_size([1200.0, 800.0]).with_resizable(false),
+        
+        ..Default::default()
+    };
+    eframe::run_native(
+        "Spreadsheet",
+        options,
+        
+        Box::new(|cc| {
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+            Ok(Box::new(utils::ui::ui::Spreadsheet::new(len_h, len_v, top_h, top_v, database, err)))
+        }),
+    )
 }
 
 fn main() {
