@@ -511,10 +511,11 @@ fn ui() -> eframe::Result {
     let len_v: i32 = 100;
     let mut database = vec![0; (len_h * len_v + 1) as usize];
     let mut err = vec![false; (len_h * len_v + 1) as usize];
+    let mut opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
+    let mut indegree = vec![0; (len_h * len_v + 1) as usize];
+    let mut sensi = vec![Vec::<i32>::new();(len_h * len_v + 1) as usize];
     let mut top_h = 1;
     let mut top_v = 1;
-    database[111] = 10;
-    err[1] = true;
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([1200.0, 800.0]).with_resizable(false),
         
@@ -526,11 +527,11 @@ fn ui() -> eframe::Result {
         
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::new(utils::ui::ui::Spreadsheet::new(len_h, len_v, top_h, top_v, database, err)))
+            Ok(Box::new(utils::ui::ui::Spreadsheet::new(len_h, len_v, top_h, top_v, database, err, opers, indegree, sensi)))
         }),
     )
 }
 
 fn main() {
-    ui();
+    let _ = ui();
 }

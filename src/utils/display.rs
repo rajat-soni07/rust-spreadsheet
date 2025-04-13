@@ -2,7 +2,7 @@ fn shift_char(c:char, i: i32)-> char{
     (c as i8 + i as i8) as u8 as char
 }
 
-fn get_label(a : i32)-> String{
+pub fn get_label(a : i32)-> String{
     let mut temp = String::new();
     let mut num = a-1;
     if 0 <= num && num <= 25 {

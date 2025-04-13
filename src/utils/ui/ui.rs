@@ -1,30 +1,7 @@
 use eframe::egui;
 use egui::{ Button, Color32, FontId, RichText};
+use crate::utils;
 
-fn shift_char(c:char, i: i32)-> char{
-    (c as i8 + i as i8) as u8 as char
-}
-
-fn get_label(a : i32)-> String{
-    let mut temp = String::new();
-    let mut num = a-1;
-    if 0 <= num && num <= 25 {
-        temp.push(shift_char('A', num));
-    } else if 26 <= num && num <= 701 {
-        num-=26;
-        temp.push(shift_char('A', num/26));
-        temp.push(shift_char('A', num%26));
-    } else if 702 <= num && num <= 18277 {
-        num-=702;
-        let c = shift_char('A', num%26);
-        num/=26;
-        temp.push(shift_char('A', num/26));
-        temp.push(shift_char('A', num%26));
-        temp.push(c);
-    }
-
-    temp
-}
 
 pub struct Spreadsheet {
     len_h: i32,
@@ -35,12 +12,16 @@ pub struct Spreadsheet {
     err: Vec<bool>,
     terminal: String,
     cell_ref: String,
-    formula_bar : String
+    formula_bar : String,
+    selected_cell: Option<i32>,
+    opers : Vec<crate::OPS>,
+    indegree : Vec<i32>,
+    sensi : Vec<Vec<i32>>
 }
 
 
 impl Spreadsheet {
-    pub fn new(len_h: i32, len_v: i32, top_h: i32, top_v: i32, database: Vec<i32>, err: Vec<bool>) -> Self {
+    pub fn new(len_h: i32, len_v: i32, top_h: i32, top_v: i32, database: Vec<i32>, err: Vec<bool>,opers: Vec<crate::OPS>,indegree: Vec<i32>,sensi: Vec<Vec<i32>>) -> Self {
         Self {
             len_h,
             len_v,
@@ -51,10 +32,14 @@ impl Spreadsheet {
             terminal: String::new(),
             cell_ref: String::new(),
             formula_bar: String::new(),
+            selected_cell: None,
+            opers,
+            indegree,
+            sensi
         }
     }
 
-    pub fn update_database(&mut self, database: Vec<i32>,new_val :i32 ,index: usize) {
+    pub fn update_database(&mut self,new_val :i32 ,index: usize) {
         self.database[index] = new_val;
     }
 }
@@ -109,7 +94,7 @@ impl eframe::App for Spreadsheet {
                             .show(ui, |ui| {
                                 ui.add_sized([100.0, 35.0], 
 
-                                    egui::Label::new(RichText::new(format!("{}", get_label(col+self.top_h))).font(FontId::proportional(20.0)))
+                                    egui::Label::new(RichText::new(format!("{}", utils::display::get_label(col+self.top_h))).font(FontId::proportional(20.0)))
                                 );
                                 
                             });
@@ -153,7 +138,7 @@ impl eframe::App for Spreadsheet {
                                             .font(FontId::proportional(20.0)))
                                     );
                                     if frame.clicked(){
-                                        println!("Clicked on cell {} :{}{}",(self.top_v + row-1) * self.len_h + col+self.top_h, get_label(col+self.top_h), row+self.top_v);
+                                        println!("Clicked on cell {} :{}{}",(self.top_v + row-1) * self.len_h + col+self.top_h, utils::display::get_label(col+self.top_h), row+self.top_v);
                                     };
                                 });
                             
@@ -165,10 +150,32 @@ impl eframe::App for Spreadsheet {
         // Footer
         ui.horizontal(|ui| {
                 ui.add(egui::Image::new(egui::include_image!("assets/terminal.jpg")).fit_to_exact_size(egui::vec2(50.0, 50.0)));
-                ui.add_sized([700.0,30.0],egui::TextEdit::singleline(&mut self.terminal)
+                let term = ui.add_sized([700.0,30.0],egui::TextEdit::singleline(&mut self.terminal)
                     .hint_text("Enter command here")
                     .font(FontId::proportional(20.0)));
-                ui.add_sized([50.0, 30.0], Button::new(RichText::new("GO").font(FontId::proportional(20.0))));
+                let go = ui.add_sized([50.0, 30.0], Button::new(RichText::new("GO").font(FontId::proportional(20.0))));
+                
+                if go.clicked() || (term.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
+                    let out = utils::input::input(&self.terminal, self.len_h, self.len_v);
+                    let mut status = out[4].clone();
+                    if status == "ok" {
+                        if out[1] == "SRL"{
+                            let t = crate::cell_to_ind(out[0].as_str(), self.len_h);
+                            let mut x1 = t%self.len_h; if x1==0{x1=self.len_h;}
+                            let y1 = t/self.len_h + ((x1!=self.len_h) as i32);
+                            self.top_h = x1; self.top_v = y1;
+                                                
+                        }
+                        else{
+                            let suc = crate::cell_update(&out, &mut self.database, &mut self.sensi, &mut self.opers, self.len_h, &mut self.indegree, &mut self.err);
+                            if suc==0{
+                                status = "cycle_detected".to_string();
+                            }
+                        }
+                    }
+                    self.terminal = String::new();
+
+                };
                 if ui.add_sized([50.0, 30.0], Button::new(RichText::new("<").font(FontId::proportional(20.0)))).clicked() {
                     self.top_h-=10;
                 };
