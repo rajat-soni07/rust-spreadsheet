@@ -1,3 +1,5 @@
+use std::cell;
+
 use regex::Regex;
 
 
@@ -8,7 +10,7 @@ fn is_integer(inp: &String) -> bool {
 
 fn cell_to_int(a: &str) -> i32{
     let mut col = 0;
-    let b = a.chars();
+    let mut b = a.chars();
     let mut part = 0;
     for c in b.clone(){
         if c.is_alphabetic() {
@@ -43,6 +45,7 @@ fn is_valid_cell(cell: &str, n_rows:i32, n_cols:i32) -> bool {
     let cell = cell_to_int(cell);
     let row = cell % 1000;
     let col = cell / 1000;
+    // println!("{cell} {row} {col}");
     // println!("{} {} {}",row,col,cell);
     // Check if the row and column are within the valid range
     if row>=1 && row<=n_rows && col>=1 && col<=n_cols {
@@ -117,7 +120,7 @@ pub fn input(inp: &String,n_rows:i32,n_cols:i32) -> Vec<String> {
         }
         output.push(cell1.clone());
         output.push(cell2.clone());
-        if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols) && is_valid_cell(&cell2, n_rows, n_cols){
+        if is_valid_cell(&target_cell, n_rows, n_cols) && (is_integer(&cell1) || is_valid_cell(&cell1, n_rows, n_cols)) && (is_integer(&cell2) || is_valid_cell(&cell2, n_rows, n_cols)){
             output.push(String::from("ok"));
         }
         else{
@@ -245,3 +248,10 @@ pub fn input(inp: &String,n_rows:i32,n_cols:i32) -> Vec<String> {
     }
     return output;
 }
+
+
+// pub fn main2(){
+//     let s =String::from( "A3 = A4 + 5");
+//     let outp = input(&s,10,10);
+//     println!("{:?}",outp)
+// }
