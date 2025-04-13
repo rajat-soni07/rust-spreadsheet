@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use eframe::egui;
 use egui::{ Button, Color32, FontId, RichText};
 use crate::utils;
@@ -16,7 +18,8 @@ pub struct Spreadsheet {
     selected_cell: Option<i32>,
     opers : Vec<crate::OPS>,
     indegree : Vec<i32>,
-    sensi : Vec<Vec<i32>>
+    sensi : Vec<Vec<i32>>,
+    temp_txt : (String,bool)
 }
 
 
@@ -35,7 +38,8 @@ impl Spreadsheet {
             selected_cell: None,
             opers,
             indegree,
-            sensi
+            sensi,
+            temp_txt: (String::new(),false)
         }
     }
 
@@ -127,19 +131,63 @@ impl eframe::App for Spreadsheet {
                             }else{
                                 "ERR".to_string()
                             };
-
+                            let ind = (self.top_v + row-1) * self.len_h + col+self.top_h;
                             egui::Frame::new()
                             
                                 .stroke(egui::Stroke::new(1.0, Color32::GRAY))
                                 .show(ui, |ui| {
+                                    if self.selected_cell == None || (self.selected_cell.unwrap() != ind) {
                                     let frame = ui.add_sized([100.0, 45.0], 
                                         
                                         egui::Label::new(RichText::new(data)
                                             .font(FontId::proportional(20.0)))
                                     );
                                     if frame.clicked(){
-                                        println!("Clicked on cell {} :{}{}",(self.top_v + row-1) * self.len_h + col+self.top_h, utils::display::get_label(col+self.top_h), row+self.top_v);
+                                        
+                                        self.selected_cell = Some(ind);
+                                        // println!("{:?}",self.selected_cell);
+                                        
+                                        self.temp_txt.1 = true;
                                     };
+                                }else{
+                                    let ind = self.selected_cell.unwrap();
+                                    
+                                    let field  = ui.add_sized([100.0, 45.0], 
+                                        
+                                        egui::TextEdit::singleline(&mut self.temp_txt.0)
+                                            .font(FontId::proportional(20.0)).vertical_align(egui::Align::Center).horizontal_align(egui::Align::Center)
+                                    );
+
+                                    if self.temp_txt.1{
+                                        field.request_focus();
+                                        
+                                        self.temp_txt.1 = false;
+                                    }
+
+                                    if field.gained_focus(){
+                                        self.temp_txt.0 = format!("{}",self.database[ind as usize]);
+                                        
+                                    }
+
+                                    if field.lost_focus() {
+                                        if self.temp_txt.0.starts_with('=') {
+                                            self.temp_txt.0.remove(0);
+                                        }
+                                        self.temp_txt.0 = format!("{}{}={}",utils::display::get_label(col+self.top_h), row+self.top_v,self.temp_txt.0);
+                                        self.selected_cell = None;
+                                        let out = utils::input::input(&self.temp_txt.0, self.len_h, self.len_v);
+                                        let mut status = out[4].clone();
+                                        if status == "ok" {
+                                            if out[1] != "SRL"{   
+                                                let suc = crate::cell_update(&out, &mut self.database, &mut self.sensi, &mut self.opers, self.len_h, &mut self.indegree, &mut self.err);
+                                                if suc==0{
+                                                    status = "cycle_detected".to_string();
+                                                }
+                                            }
+                                        }
+                                        self.temp_txt.0 = String::new();
+                                    }
+                                }
                                 });
                             
                         }
@@ -174,7 +222,7 @@ impl eframe::App for Spreadsheet {
                         }
                     }
                     self.terminal = String::new();
-
+                    term.request_focus();
                 };
                 if ui.add_sized([50.0, 30.0], Button::new(RichText::new("<").font(FontId::proportional(20.0)))).clicked() {
                     self.top_h-=10;
