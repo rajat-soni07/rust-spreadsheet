@@ -13,8 +13,8 @@ pub struct Spreadsheet {
     database: Vec<i32>,
     err: Vec<bool>,
     terminal: String,
-    cell_ref: String,
-    formula_bar : String,
+    cell_ref: (String,bool,bool),
+    formula_bar : (String,bool,bool),
     selected_cell: Option<i32>,
     opers : Vec<crate::OPS>,
     indegree : Vec<i32>,
@@ -33,8 +33,8 @@ impl Spreadsheet {
             database,
             err,
             terminal: String::new(),
-            cell_ref: String::new(),
-            formula_bar: String::new(),
+            cell_ref: (String::new(),false,false),
+            formula_bar: (String::new(),false,false),
             selected_cell: None,
             opers,
             indegree,
@@ -69,8 +69,61 @@ impl eframe::App for Spreadsheet {
             });
             ui.add_space(10.0); // Add bottom margin
             ui.horizontal(|ui|{
-                ui.add_sized([210.0,30.0], egui::TextEdit::singleline(&mut self.cell_ref).hint_text("Eg. A1").font(FontId::proportional(20.0)));
-                ui.add_sized([950.0,30.0], egui::TextEdit::singleline(&mut self.formula_bar).hint_text("Eg. =A2+A3").font(FontId::proportional(20.0)));
+
+                if self.cell_ref.1 {
+
+                let cell = ui.add_sized([210.0,30.0], egui::TextEdit::singleline(&mut self.cell_ref.0).hint_text("Eg. A1").font(FontId::proportional(20.0)));
+                
+                if self.cell_ref.2 {
+                    cell.request_focus();
+                    self.cell_ref.2 = true;
+                }
+
+                if cell.gained_focus() {
+                    if self.selected_cell != None {
+                        self.cell_ref.0 = format!("{}{}",utils::display::get_label(self.selected_cell.unwrap()%self.len_h), self.selected_cell.unwrap()/self.len_h + 1);
+                    }else{
+                        self.cell_ref.0 = String::new();
+                    }
+                    
+                    self.cell_ref.1 = true;
+                }
+
+                if cell.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    let temp = format!("scroll_to({})", self.cell_ref.0);
+                    let out = utils::input::input(&temp, self.len_h, self.len_v);
+                    let mut status = out[4].clone();
+                    if status == "ok" {
+                        if out[1] == "SRL"{   
+                            let t = crate::cell_to_ind(out[0].as_str(), self.len_h);
+                            let mut x1 = t%self.len_h; if x1==0{x1=self.len_h;}
+                            let y1 = t/self.len_h + ((x1!=self.len_h) as i32);
+                            self.top_h = x1; self.top_v = y1;
+                        }
+                    }
+                    self.cell_ref.1 = false;
+                };
+            }else{
+
+                
+                
+                if self.selected_cell != None {
+                    self.cell_ref.0 = format!("{}{}",utils::display::get_label(self.selected_cell.unwrap()%self.len_h), self.selected_cell.unwrap()/self.len_h + 1);
+                }else{
+                    self.cell_ref.0 = String::new();
+                }
+                
+                let cell = ui.add_sized([210.0,30.0], egui::Label::new(RichText::new(format!("{}",self.cell_ref.0)).font(FontId::proportional(20.0))));
+
+                if cell.clicked() {
+                    self.cell_ref.1 = true;
+                }
+
+            }
+
+
+                
+                let formula_bar = ui.add_sized([950.0,30.0], egui::TextEdit::singleline(&mut self.formula_bar.0).hint_text("Eg. =A2+A3").font(FontId::proportional(20.0)));
                 
             });
 
