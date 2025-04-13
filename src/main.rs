@@ -427,9 +427,8 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
 
 }
 
-fn non_ui() {
-    let len_h: i32 = 10;
-    let len_v: i32 = 10;
+fn non_ui(len_h: i32, len_v: i32) {
+
     let mut database = vec![0; (len_h * len_v + 1) as usize];
     let mut err = vec![false; (len_h * len_v + 1) as usize];
     let mut opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
@@ -474,6 +473,7 @@ fn non_ui() {
                 dis = false;
             },
             _ => {
+
                 let out = utils::input::input(&input, len_h, len_v);
                 status = out[4].clone();
                 if status == "ok" {
@@ -482,7 +482,7 @@ fn non_ui() {
                         let mut x1 = t%len_h; if x1==0{x1=len_h;}
                         let y1 = t/len_h + ((x1!=len_h) as i32);
                         curr_h = x1; curr_v = y1;
-                                               
+                        // println!("Scrolling to cell {} at ({},{})", out[0], curr_h, curr_v);
                     }
                     else{
                         let suc = cell_update(&out, &mut database, &mut sensi, &mut opers, len_h, &mut indegree, &mut err);
@@ -504,19 +504,16 @@ fn non_ui() {
 }
 
 
-fn ui() -> eframe::Result {
-    
-    let len_h: i32 = 100;
-    let len_v: i32 = 100;
-    let mut database = vec![0; (len_h * len_v + 1) as usize];
-    let mut err = vec![false; (len_h * len_v + 1) as usize];
-    let mut opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
-    let mut indegree = vec![0; (len_h * len_v + 1) as usize];
-    let mut sensi = vec![Vec::<i32>::new();(len_h * len_v + 1) as usize];
-    let mut top_h = 1;
-    let mut top_v = 1;
+fn ui(len_h: i32,len_v: i32) -> eframe::Result {
+    let database = vec![0; (len_h * len_v + 1) as usize];
+    let err = vec![false; (len_h * len_v + 1) as usize];
+    let opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
+    let indegree = vec![0; (len_h * len_v + 1) as usize];
+    let sensi = vec![Vec::<i32>::new();(len_h * len_v + 1) as usize];
+    let top_h = 1;
+    let top_v = 1;
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1200.0, 800.0]).with_resizable(false),
+        viewport: egui::ViewportBuilder::default().with_inner_size([1200.0, 800.0]).with_resizable(false).with_maximize_button(false),
         
         ..Default::default()
     };
@@ -532,5 +529,18 @@ fn ui() -> eframe::Result {
 }
 
 fn main() {
-    let _ = ui();
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() >=3{
+        let len_h: i32 = args[2].parse().unwrap_or(10);
+        let len_v: i32 = args[1].parse().unwrap_or(10);
+        if args.len() == 4 {
+            if args[3] == "--ui"{
+                ui(len_h,len_v).unwrap();
+            }             
+        } else{
+            non_ui(len_h,len_v);
+        }
+    } else {
+        println!("Usage: cargo run <len_h> <len_v> <flag>");
+    }
 }

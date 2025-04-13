@@ -1,5 +1,3 @@
-use std::cell;
-
 use regex::Regex;
 
 
@@ -10,7 +8,7 @@ fn is_integer(inp: &String) -> bool {
 
 fn cell_to_int(a: &str) -> i32{
     let mut col = 0;
-    let mut b = a.chars();
+    let b = a.chars();
     let mut part = 0;
     for c in b.clone(){
         if c.is_alphabetic() {
@@ -74,7 +72,7 @@ fn is_valid_range(cell1 : &String, cell2 : &String, n_rows:i32, n_cols:i32) -> b
     return false;
 }
 
-pub fn input(inp: &String,n_rows:i32,n_cols:i32) -> Vec<String> {
+pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
 
     // () used in regex for capture
     let mut output: Vec<String>=Vec::new();
