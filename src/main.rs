@@ -3,6 +3,7 @@ use std::io::Write;
 
 mod utils;
 
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 struct OPS {
     opcpde: String,
     cell1: i32,

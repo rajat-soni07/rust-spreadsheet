@@ -1,8 +1,16 @@
 use eframe::egui;
 use egui::{Button, Color32, FontId, RichText};
 use crate::utils;
+use crate::utils::ui;
+use notify_rust::Notification;
 
+#[derive(serde::Serialize, serde::Deserialize, Debug,PartialEq,Clone)]
+enum Save {
+    RSK,
+    CSV
+}
 
+#[derive(serde::Serialize, serde::Deserialize, Debug,Clone)]
 pub struct Spreadsheet {
     len_h: i32,
     len_v: i32,
@@ -18,9 +26,21 @@ pub struct Spreadsheet {
     indegree : Vec<i32>,
     sensi : Vec<Vec<i32>>,
     temp_txt : (String,bool),
-    formula : Vec<String>
+    formula : Vec<String>,
 
+    // Save_dialog
+    save_dialog: bool,
+    save_path: String,
+    save_name: String,
+    save_type: Save,
+    save_todo: Option<(Save,String)>,
+
+    // Load_dialog
+    load_dialog: bool,
+    load_path: String,
+    load_todo: bool,
 }
+
 
 
 impl Spreadsheet {
@@ -41,13 +61,154 @@ impl Spreadsheet {
             sensi,
             temp_txt: (String::new(),false),
             formula: vec![String::new(); (len_h*len_v + 1) as usize],
+
+            // Save_dialog
+            save_dialog : false,
+            save_path : String::new(),
+            save_name : String::new(),
+            save_type : Save::RSK,
+            save_todo : None,
+
+            // Load_dialog
+
+            load_dialog : false,
+            load_path : String::new(),
+            load_todo : false,
+
         }
     }
 
 }
 
 impl eframe::App for Spreadsheet {
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+
+        // Save dialog
+        egui::Window::new("Save Spreadsheet")
+        .open(&mut self.save_dialog)
+        .order(egui::Order::Foreground)
+        .fixed_size(egui::vec2(800.0, 500.0))
+        
+        .collapsible(false)
+        .show(ctx, |ui| {
+            ui.add_space(10.0);
+            ui.add_sized([500.0,30.0],egui::TextEdit::singleline(&mut self.save_name).hint_text("Enter file name").font(FontId::proportional(20.0)));
+            ui.add_space(10.0);
+            
+            ui.horizontal(|ui| {
+                ui.add_sized([400.0,30.0],egui::TextEdit::singleline(&mut self.save_path).hint_text("Enter folder path").font(FontId::proportional(20.0)));
+                // ui.text_edit_singleline(&mut self.save_path);
+                if ui.add_sized([90.0,30.0],Button::new(RichText::new("Browse").font(FontId::proportional(20.0)))).clicked() {
+                    if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                        self.save_path = path.display().to_string();
+                    }
+                };
+                
+            });
+            ui.add_space(10.0);
+            
+            
+            ui.horizontal(|ui| {
+                ui.label("\t\t\t\t\t\t\t");
+
+                if ui.add(egui::RadioButton::new(self.save_type==Save::RSK, RichText::new("RSK\t\t\t\t\t\t\t\t").font(FontId::proportional(20.0)))).on_hover_text("Save to a custom file extension that saves the state of program when you next load it").clicked() {
+                    self.save_type = Save::RSK;
+                }
+                if ui.add(egui::RadioButton::new(self.save_type==Save::CSV, RichText::new("CSV").font(FontId::proportional(20.0)))).on_hover_text("Save all visible values to a CSV but all the formula's are lost").clicked() {
+                    self.save_type = Save::CSV;
+                }
+
+            });
+            ui.horizontal(|ui|{
+                ui.label("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+
+                if ui.add_sized([100.0,30.0], Button::new(RichText::new("Save").font(FontId::proportional(20.0)))).clicked() {
+                    if self.save_type == Save::RSK {
+                        let path = format!("{}/{}.rsk", self.save_path,self.save_name);
+                        self.save_todo = Some((self.save_type.clone(),path));
+                        
+                    } else if self.save_type == Save::CSV {
+                        let path = format!("{}/{}.csv", self.save_path,self.save_name);
+                        self.save_todo = Some((self.save_type.clone(),path));
+                        
+    
+                    }
+                    
+                }
+
+            });
+        });
+
+        if self.save_todo != None{
+            println!("{:?}",self.save_todo);
+            let (save_type, path) = self.save_todo.clone().unwrap();
+            self.save_todo = None;
+            self.save_dialog = false;
+            match save_type {
+                Save::RSK => {
+                    ui::loadnsave::save_to_file(self, &path);
+                }
+                Save::CSV => {
+                    ui::loadnsave::save_1d_as_csv(&self.database,&self.err,self.len_h,self.len_v,&path).unwrap();
+                }
+            }
+            
+            
+            Notification::new()
+                .summary("File Saved")
+                .body(format!("File saved to {}", path).as_str())
+                .show().unwrap();
+        }
+
+
+        // Load dialog
+        egui::Window::new("Load Spreadsheet")
+        .open(&mut self.load_dialog)
+        .order(egui::Order::Foreground)
+        .fixed_size(egui::vec2(800.0, 500.0))
+        .collapsible(false)
+        .show(ctx, |ui| {
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+                ui.add_sized([400.0,30.0],egui::TextEdit::singleline(&mut self.load_path).hint_text("Enter file path").font(FontId::proportional(20.0)));
+                // ui.text_edit_singleline(&mut self.save_path);
+                if ui.add_sized([90.0,30.0],Button::new(RichText::new("Browse").font(FontId::proportional(20.0)))).clicked() {
+                    if let Some(path) = rfd::FileDialog::new().add_filter("Rust Spreadsheet",&["rsk"]).pick_file() {
+                        self.load_path = path.display().to_string();
+                    }
+                };
+                
+            });
+            ui.add_space(10.0);
+
+
+            ui.horizontal(|ui|{
+                ui.label("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+
+                if ui.add_sized([100.0,30.0], Button::new(RichText::new("Load").font(FontId::proportional(20.0)))).clicked() {
+                    self.load_todo = true;
+                }
+
+            });
+
+        });
+
+        if self.load_todo{
+            self.load_dialog = false;
+            self.load_todo = false;
+            let path = self.load_path.clone();
+            *self = ui::loadnsave::read_from_file(self.load_path.as_str());
+            
+            Notification::new()
+                .summary("File Loaded")
+                .body(format!("File Loaded from {}", path).as_str())
+                .show().unwrap();
+        }
+
+
+
 
         egui::CentralPanel::default().show(ctx, |ui| {
             
@@ -75,8 +236,12 @@ impl eframe::App for Spreadsheet {
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/describe.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/plot.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/pdf.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/folder.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/save.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
+                if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/folder.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
+                    self.load_dialog = true;
+                };
+                if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/save.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked() {
+                    self.save_dialog = true;
+                };
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                     let current_date = chrono::Local::now().format("%A, %B %d, %Y").to_string();
                     let current_time = chrono::Local::now().format("%H:%M:%S").to_string();
