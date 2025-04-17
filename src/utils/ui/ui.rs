@@ -10,6 +10,14 @@ enum Save {
     CSV
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Debug,PartialEq,Clone)]
+enum PLOT {
+    Line,
+    Scatter
+}
+
+
+
 #[derive(serde::Serialize, serde::Deserialize, Debug,Clone)]
 pub struct Spreadsheet {
     len_h: i32,
@@ -39,6 +47,15 @@ pub struct Spreadsheet {
     load_dialog: bool,
     load_path: String,
     load_todo: bool,
+
+    // Plot dialog
+    plot_dialog: bool,
+    plot_x_axis: String,
+    plot_y_axis: String,
+    plot_rows: String,
+    plot_type: PLOT,
+    plot_save: String,
+    plot_todo: bool,
 }
 
 
@@ -74,6 +91,15 @@ impl Spreadsheet {
             load_dialog : false,
             load_path : String::new(),
             load_todo : false,
+
+            // Plot dialog
+            plot_dialog: false,
+            plot_x_axis: String::new(),
+            plot_y_axis: String::new(),
+            plot_rows: String::new(),
+            plot_type: PLOT::Line,
+            plot_save: String::new(),
+            plot_todo: false,
 
         }
     }
@@ -208,25 +234,126 @@ impl eframe::App for Spreadsheet {
         }
 
 
+        //  Plot dialog
+        egui::Window::new("Plot Data")
+        .open(&mut self.plot_dialog)
+        .order(egui::Order::Foreground)
+        .fixed_size(egui::vec2(800.0, 500.0))
+        .collapsible(false)
+        .show(ctx, |ui| {
+            ui.add_space(10.0);
 
+            ui.horizontal(|ui| {
+            ui.label(RichText::new("X-Axis:\t").font(FontId::proportional(20.0)));
+            ui.add_sized([450.0, 30.0], egui::TextEdit::singleline(&mut self.plot_x_axis).hint_text("Enter column for X-axis").font(FontId::proportional(20.0)));
+            });
+
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+            ui.label(RichText::new("Y-Axis:\t").font(FontId::proportional(20.0)));
+            ui.add_sized([450.0, 30.0], egui::TextEdit::singleline(&mut self.plot_y_axis).hint_text("Enter column for Y-axis").font(FontId::proportional(20.0)));
+            });
+
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+            ui.label(RichText::new("Rows: \t").font(FontId::proportional(20.0)));
+            ui.add_sized([450.0, 30.0], egui::TextEdit::singleline(&mut self.plot_rows).hint_text("Enter row range (e.g., 1-10)").font(FontId::proportional(20.0)));
+            });
+
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+            ui.label(RichText::new("Plot Type:\t\t").font(FontId::proportional(20.0)));
+            if ui.add(egui::RadioButton::new(self.plot_type == PLOT::Line, RichText::new("Line\t\t\t\t").font(FontId::proportional(20.0)))).clicked() {
+                self.plot_type = PLOT::Line;
+            }
+            if ui.add(egui::RadioButton::new(self.plot_type == PLOT::Scatter, RichText::new("Scatter").font(FontId::proportional(20.0)))).clicked() {
+                self.plot_type = PLOT::Scatter;
+            }
+            });
+
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("Save Path:\t").font(FontId::proportional(20.0)));
+                ui.add_sized([300.0, 30.0], egui::TextEdit::singleline(&mut self.plot_save).hint_text("Enter save path").font(FontId::proportional(20.0)));
+                if ui.add_sized([90.0, 30.0], Button::new(RichText::new("Browse").font(FontId::proportional(20.0)))).clicked() {
+                    if let Some(path) = rfd::FileDialog::new().add_filter("PNG Image", &["png"]).save_file() {
+                        self.plot_save = path.display().to_string();
+                    }
+                };
+            });
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+            ui.label("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+
+            if ui.add_sized([100.0, 30.0], Button::new(RichText::new("Plot").font(FontId::proportional(20.0)))).clicked(){
+                let mut data: Vec<(f64,f64)> = vec![];
+                let rows: Vec<&str> = self.plot_rows.split(':').collect();
+                if rows.len() == 2 {
+                    if let (Ok(start), Ok(end)) = (rows[0].trim().parse::<i32>(), rows[1].trim().parse::<i32>()) {
+                        if start <= end {
+                            for i in start..=end {
+                            data.push((self.database[crate::cell_to_ind(format!("{}{}",self.plot_x_axis,i).as_str(), self.len_h) as usize] as f64,
+                            self.database[crate::cell_to_ind(format!("{}{}",self.plot_y_axis,i).as_str(), self.len_h) as usize] as f64
+                         ));
+                            }
+                        }
+                    } }
+                
+                if self.plot_type == PLOT::Scatter {
+                    utils::ui::plot::scatter_plot(&data,self.plot_save.as_str()).unwrap();
+                }else{
+                    utils::ui::plot::line_plot(&data,self.plot_save.as_str()).unwrap();
+                }
+
+                #[cfg(target_os = "windows")]
+                {
+                    // Windows: Use "start" to open the image
+                    std::process::Command::new("cmd")
+                        .args(&["/C", "start", &self.plot_save])
+                        .spawn()
+                        .expect("Failed to open image");
+                }
+                #[cfg(target_os = "linux")]
+                {
+                    // Linux: Use "xdg-open" to open the image
+                    std::process::Command::new("xdg-open")
+                        .arg(&self.plot_save)
+                        .spawn()
+                        .expect("Failed to open image");
+                }
+                
+            self.plot_todo = true;
+
+
+            };
+            });
+        });
+
+        if self.plot_todo{
+            self.plot_dialog = false;
+            self.plot_todo = false;
+        }
 
         egui::CentralPanel::default().show(ctx, |ui| {
             
-            if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)){
-                self.top_v-=1;
-            }
+            // if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)){
+            //     self.top_v-=1;
+            // }
 
-            if ui.input(|i| i.key_pressed(egui::Key::ArrowLeft)){
-                self.top_h-=1;
-            }
+            // if ui.input(|i| i.key_pressed(egui::Key::ArrowLeft)){
+            //     self.top_h-=1;
+            // }
 
-            if ui.input(|i| i.key_pressed(egui::Key::ArrowRight)){
-                self.top_h+=1;
-            }
+            // if ui.input(|i| i.key_pressed(egui::Key::ArrowRight)){
+            //     self.top_h+=1;
+            // }
 
-            if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)){
-                self.top_v+=1;
-            }
+            // if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)){
+            //     self.top_v+=1;
+            // }
 
             ui.add_space(10.0);
             // Header
@@ -234,7 +361,9 @@ impl eframe::App for Spreadsheet {
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/copy.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/paste.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/describe.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/plot.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
+                if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/plot.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
+                    self.plot_dialog = true;
+                };
                 ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/pdf.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
                 if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/folder.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
                     self.load_dialog = true;
