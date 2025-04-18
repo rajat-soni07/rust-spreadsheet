@@ -214,6 +214,7 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
 
     // Handling arithmetic
     if rev.opcpde.starts_with('C') {
+        
         sensi[rev.cell1 as usize].retain(|&x| x != target as i32);
     }
 
@@ -233,56 +234,106 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
 
     // Handling ranges
     if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&rev.opcpde.as_str()) {
-        let x1 = (rev.cell1 % len_h) as usize;
-        let x2 = (rev.cell2 % len_h) as usize;
-        let y1 = (rev.cell1 / len_h) as usize;
-        let y2 = (rev.cell2 / len_h) as usize;
+        let mut x1 = (rev.cell1 % len_h) as usize;
+        let mut x2 = (rev.cell2 % len_h) as usize;
+        if x1==0{x1 = len_h as usize;}
+        if x2==0{x2 = len_h as usize;}
 
-        for i in x1..=x2 {
-            for j in y1..=y2 {
-                sensi[i + (j - 1) * len_h as usize].retain(|&x| x != target as i32);
+        let y1 = (rev.cell1 / len_h) as usize + ((x1 != len_h as usize) as usize);
+        let y2 = (rev.cell2 / len_h) as usize + ((x2 != len_h as usize) as usize);
+
+        if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&inp_arr[1].as_str()) {
+            let mut xx1 = (opers[target].cell1 % len_h) as usize;
+            let mut xx2 = (opers[target].cell2 % len_h) as usize;
+            if xx1==0{xx1 = len_h as usize;}
+            if xx2==0{xx2 = len_h as usize;}
+    
+            let xy1 = (opers[target].cell1 / len_h) as usize + ((xx1 != len_h as usize) as usize);
+            let xy2 = (opers[target].cell2 / len_h) as usize + ((xx2 != len_h as usize) as usize);
+    
+    
+            for i in x1..=x2 {
+                for j in y1..=y2 {
+                    if !(xx1 <= i && i <= xx2 && xy1 <= j && j <= xy2) {
+                        sensi[i + (j - 1) * len_h as usize].retain(|&x| x != target as i32);
+                    }
+                }
+            }
+        }else{
+            for i in x1..=x2 {
+                for j in y1..=y2 {
+                    sensi[i + (j - 1) * len_h as usize].retain(|&x| x != target as i32);
+                }
             }
         }
+       
     }
 
     // Adding items to sensitivity list
+
+    // Handling arithmetic
     if inp_arr[1].starts_with('C') {
-        if !sensi[opers[target].cell1 as usize].contains(&(target as i32)) {
+        if sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32 {
             sensi[opers[target].cell1 as usize].push(target as i32);
         }
     }
 
     if inp_arr[1].chars().nth(1) == Some('C') {
-        if !sensi[opers[target].cell2 as usize].contains(&(target as i32)) {
+        if sensi[opers[target].cell2 as usize].is_empty() || *sensi[opers[target].cell2 as usize].last().unwrap() != target as i32 {
             sensi[opers[target].cell2 as usize].push(target as i32);
         }
     }
 
+    // Handling eq
     if inp_arr[1] == "EQC" {
-        if !sensi[opers[target].cell1 as usize].contains(&(target as i32)) {
+        if sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32 {
             sensi[opers[target].cell1 as usize].push(target as i32);
         }
     }
 
     if inp_arr[1] == "SLC" {
-        if !sensi[opers[target].cell1 as usize].contains(&(target as i32)) {
+        if sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32 {
             sensi[opers[target].cell1 as usize].push(target as i32);
         }
     }
 
+    // Handling ranges
     if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&inp_arr[1].as_str()) {
-        let x1 = (opers[target].cell1 % len_h) as usize;
-        let x2 = (opers[target].cell2 % len_h) as usize;
-        let y1 = (opers[target].cell1 / len_h) as usize;
-        let y2 = (opers[target].cell2 / len_h) as usize;
+        let mut x1 = (opers[target].cell1 % len_h) as usize;
+        let mut x2 = (opers[target].cell2 % len_h) as usize;
+        if x1==0{x1 = len_h as usize;}
+        if x2==0{x2 = len_h as usize;}
+
+        let y1 = (opers[target].cell1 / len_h) as usize + ((x1 != len_h as usize) as usize);
+        let y2 = (opers[target].cell2 / len_h) as usize + ((x2 != len_h as usize) as usize);
+
+        if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&rev.opcpde.as_str()) {
+            let mut xx1 = (rev.cell1 % len_h) as usize;
+            let mut xx2 = (rev.cell2 % len_h) as usize;
+            if xx1==0{xx1 = len_h as usize;}
+            if xx2==0{xx2 = len_h as usize;}
+    
+            let xy1 = (rev.cell1 / len_h) as usize + ((xx1 != len_h as usize) as usize);
+            let xy2 = (rev.cell2 / len_h) as usize + ((xx2 != len_h as usize) as usize);
+    
+    
+            for i in x1..=x2 {
+                for j in y1..=y2 {
+                    if !(xx1 <= i && i <= xx2 && xy1 <= j && j <= xy2) {
+
+                        sensi[i + (j - 1) * len_h as usize].push(target as i32);
+                        
+                    }
+                }
+            }
+        } else {
 
         for i in x1..=x2 {
             for j in y1..=y2 {
-                if !sensi[i + (j - 1) * len_h as usize].contains(&(target as i32)) {
-                    sensi[i + (j - 1) * len_h as usize].push(target as i32);
-                }
+                sensi[i + (j - 1) * len_h as usize].push(target as i32);
             }
         }
+    }
     }
 
     let topo = utils::toposort::topo_sort(&sensi, target as i32, indegree);
@@ -294,7 +345,7 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         if inp_arr[1].starts_with('C') {
             if let Some(first) = sensi[opers[target].cell1 as usize].first() {
                 if *first == target as i32 {
-                    sensi[opers[target].cell1 as usize].remove(0);
+                    sensi[opers[target].cell1 as usize].pop();
                 }
             }
         }
@@ -302,7 +353,7 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         if inp_arr[1].chars().nth(1) == Some('C') {
             if let Some(first) = sensi[opers[target].cell2 as usize].first() {
                 if *first == target as i32 {
-                    sensi[opers[target].cell2 as usize].remove(0);
+                    sensi[opers[target].cell2 as usize].pop();
                 }
             }
         }
@@ -311,7 +362,7 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         if inp_arr[1] == "EQC" {
             if let Some(first) = sensi[opers[target].cell1 as usize].first() {
                 if *first == target as i32 {
-                    sensi[opers[target].cell1 as usize].remove(0);
+                    sensi[opers[target].cell1 as usize].pop();
                 }
             }
         }
@@ -320,35 +371,41 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         if inp_arr[1] == "SLC" {
             if let Some(first) = sensi[opers[target].cell1 as usize].first() {
                 if *first == target as i32 {
-                    sensi[opers[target].cell1 as usize].remove(0);
+                    sensi[opers[target].cell1 as usize].pop();
                 }
             }
         }
 
         // Handling ranges
         if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&inp_arr[1].as_str()) {
-            let x1 = (opers[target].cell1 % len_h) as usize;
-            let x2 = (opers[target].cell2 % len_h) as usize;
-            let y1 = (opers[target].cell1 / len_h) as usize;
-            let y2 = (opers[target].cell2 / len_h) as usize;
+            let mut x1 = (opers[target].cell1 % len_h) as usize;
+            let mut x2 = (opers[target].cell2 % len_h) as usize;
+            if x1==0{x1 = len_h as usize;}
+            if x2==0{x2 = len_h as usize;}
+
+            let y1 = (opers[target].cell1 / len_h) as usize + ((x1 != len_h as usize) as usize);
+            let y2 = (opers[target].cell2 / len_h) as usize + ((x2 != len_h as usize) as usize);
 
             if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&rev.opcpde.as_str()) {
-                let xx1 = (rev.cell1 % len_h) as usize;
-                let xx2 = (rev.cell2 % len_h) as usize;
-                let xy1 = (rev.cell1 / len_h) as usize;
-                let xy2 = (rev.cell2 / len_h) as usize;
-
+                let mut xx1 = (rev.cell1 % len_h) as usize;
+                let mut xx2 = (rev.cell2 % len_h) as usize;
+                if xx1==0{xx1 = len_h as usize;}
+                if xx2==0{xx2 = len_h as usize;}
+        
+                let xy1 = (rev.cell1 / len_h) as usize + ((xx1 != len_h as usize) as usize);
+                let xy2 = (rev.cell2 / len_h) as usize + ((xx2 != len_h as usize) as usize);
+    
                 for i in x1..=x2 {
                     for j in y1..=y2 {
                         if !(xx1 <= i && i <= xx2 && xy1 <= j && j <= xy2) {
-                            sensi[i + (j - 1) * len_h as usize].remove(0);
+                            sensi[i + (j - 1) * len_h as usize].pop();
                         }
                     }
                 }
             } else {
                 for i in x1..=x2 {
                     for j in y1..=y2 {
-                        sensi[i + (j - 1) * len_h as usize].remove(0);
+                        sensi[i + (j - 1) * len_h as usize].pop();
                     }
                 }
             }
@@ -357,55 +414,62 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         // Adding back older values
 
         if rev.opcpde.starts_with('C') {
-            if !sensi[rev.cell1 as usize].contains(&(target as i32)) {
-                sensi[rev.cell1 as usize].insert(0, target as i32);
+            if sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32 {
+                sensi[rev.cell1 as usize].push(target as i32);
             }
         }
 
         if rev.opcpde.chars().nth(1) == Some('C') {
-            if !sensi[rev.cell2 as usize].contains(&(target as i32)) {
-                sensi[rev.cell2 as usize].insert(0, target as i32);
+            if sensi[rev.cell2 as usize].is_empty() || *sensi[rev.cell2 as usize].last().unwrap() != target as i32 {
+                sensi[rev.cell2 as usize].push(target as i32);
             }
         }
 
         // Handling eq
         if rev.opcpde == "EQC" {
-            if !sensi[rev.cell1 as usize].contains(&(target as i32)) {
-                sensi[rev.cell1 as usize].insert(0, target as i32);
+            if sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32 {
+                sensi[rev.cell1 as usize].push(target as i32);
             }
         }
 
         // Handling sleep
         if rev.opcpde == "SLC" {
-            if !sensi[rev.cell1 as usize].contains(&(target as i32)) {
-                sensi[rev.cell1 as usize].insert(0, target as i32);
+            if sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32 {
+                sensi[rev.cell1 as usize].push(target as i32);
             }
         }
 
         // Handling ranges
         if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&rev.opcpde.as_str()) {
-            let x1 = (rev.cell1 % len_h) as usize;
-            let x2 = (rev.cell2 % len_h) as usize;
-            let y1 = (rev.cell1 / len_h) as usize;
-            let y2 = (rev.cell2 / len_h) as usize;
+            let mut x1 = (rev.cell1 % len_h) as usize;
+            let mut x2 = (rev.cell2 % len_h) as usize;
+            if x1==0{x1 = len_h as usize;}
+            if x2==0{x2 = len_h as usize;}
+
+            let y1 = (rev.cell1 / len_h) as usize + ((x1 != len_h as usize) as usize);
+            let y2 = (rev.cell2 / len_h) as usize + ((x2 != len_h as usize) as usize);
+
 
             if ["SUM", "MIN", "MAX", "MEA", "STD"].contains(&inp_arr[1].as_str()) {
-                let xx1 = (opers[target].cell1 % len_h) as usize;
-                let xx2 = (opers[target].cell2 % len_h) as usize;
-                let xy1 = (opers[target].cell1 / len_h) as usize;
-                let xy2 = (opers[target].cell2 / len_h) as usize;
-
+                let mut xx1 = (opers[target].cell1 % len_h) as usize;
+                let mut xx2 = (opers[target].cell2 % len_h) as usize;
+                if xx1==0{xx1 = len_h as usize;}
+                if xx2==0{xx2 = len_h as usize;}
+        
+                let xy1 = (opers[target].cell1 / len_h) as usize + ((xx1 != len_h as usize) as usize);
+                let xy2 = (opers[target].cell2 / len_h) as usize + ((xx2 != len_h as usize) as usize);
+    
                 for i in x1..=x2 {
                     for j in y1..=y2 {
                         if !(xx1 <= i && i <= xx2 && xy1 <= j && j <= xy2) {
-                            sensi[i + (j - 1) * len_h as usize].insert(0, target as i32);
+                            sensi[i + (j - 1) * len_h as usize].push(target as i32);
                         }
                     }
                 }
             } else {
                 for i in x1..=x2 {
                     for j in y1..=y2 {
-                        sensi[i + (j - 1) * len_h as usize].insert(0, target as i32);
+                        sensi[i + (j - 1) * len_h as usize].push(target as i32);
                     }
                 }
             }
