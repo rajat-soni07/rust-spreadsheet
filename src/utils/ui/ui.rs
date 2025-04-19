@@ -56,6 +56,21 @@ pub struct Spreadsheet {
     plot_type: PLOT,
     plot_save: String,
     plot_todo: bool,
+
+    // PDF dialog
+    pdf_dialog: bool,
+    pdf_path: String,
+    pdf_todo: bool,
+
+    clipbaord: String,
+
+    // Describe dialog
+    describe_dialog: bool,
+    describe_range: String,
+    describe_data: [f64; 8],
+
+    // About dialog
+    about_dialog: bool,
 }
 
 
@@ -101,6 +116,21 @@ impl Spreadsheet {
             plot_save: String::new(),
             plot_todo: false,
 
+            // PDF dialog
+
+            pdf_dialog: false,
+            pdf_path: String::new(),
+            pdf_todo: false,
+
+            clipbaord: String::new(),
+
+            // Describe dialog
+            describe_dialog: false,
+            describe_range: String::new(),
+            describe_data: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            
+            // About dialog
+            about_dialog: false,
         }
     }
 
@@ -337,6 +367,164 @@ impl eframe::App for Spreadsheet {
             self.plot_todo = false;
         }
 
+
+        // PDF dialog
+        egui::Window::new("Save as PDF")
+        .open(&mut self.pdf_dialog)
+        .order(egui::Order::Foreground)
+        .fixed_size(egui::vec2(800.0, 500.0))
+        .collapsible(false)
+        .show(ctx, |ui| {
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+                ui.add_sized([400.0,30.0],egui::TextEdit::singleline(&mut self.pdf_path).hint_text("Enter PDF path").font(FontId::proportional(20.0)));
+                // ui.text_edit_singleline(&mut self.save_path);
+                if ui.add_sized([90.0,30.0],Button::new(RichText::new("Browse").font(FontId::proportional(20.0)))).clicked() {
+                    if let Some(path) = rfd::FileDialog::new().add_filter("PDF Document",&["pdf"]).save_file() {
+                        self.pdf_path = path.display().to_string();
+                    }
+                };
+                
+            });
+            ui.add_space(10.0);
+
+
+            ui.horizontal(|ui|{
+                ui.label("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
+
+                if ui.add_sized([100.0,30.0], Button::new(RichText::new("Save").font(FontId::proportional(20.0)))).clicked() {
+                    self.pdf_todo = true;
+                }
+
+            });
+
+        });
+
+        if self.pdf_todo{
+            self.pdf_dialog = false;
+            self.pdf_todo = false;
+            utils::ui::loadnsave::save_1d_as_pdf(&self.database,&self.err,self.len_h,self.len_v,&self.pdf_path).unwrap();
+            Notification::new()
+                .summary("PDF Saved")
+                .body(format!("PDF saved to {}", self.pdf_path).as_str())
+                .show().unwrap();
+        }
+
+
+        // Describe dialog
+        egui::Window::new("Describe Data")
+        .open(&mut self.describe_dialog)
+        .order(egui::Order::Foreground)
+        .fixed_size(egui::vec2(400.0, 500.0))
+        .collapsible(false)
+        .show(ctx, |ui| {
+            ui.add_space(10.0);
+
+            ui.horizontal(|ui| {
+            ui.label(RichText::new("Range:").font(FontId::proportional(20.0)));
+            ui.add_sized([250.0, 30.0], egui::TextEdit::singleline(&mut self.describe_range).hint_text("Enter range (e.g., A1:B10)").font(FontId::proportional(20.0)));
+            });
+
+            ui.add_space(10.0);
+            // let mut ans = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+            ui.horizontal(|ui| {
+            ui.label("\t\t\t\t\t\t\t\t\t");
+            
+            if ui.add_sized([100.0, 30.0], Button::new(RichText::new("Describe").font(FontId::proportional(20.0)))).clicked() {
+                let range = self.describe_range.clone();
+                let mut start = 0;
+                let mut end = 0;
+                if range.contains(':'){
+                    let parts: Vec<&str> = range.split(':').collect();
+                    start = crate::cell_to_ind(parts[0],self.len_h) as i32;
+                    end = crate::cell_to_ind(parts[1],self.len_h) as i32;
+                }
+                let n_cols= self.len_h;
+                let mut y1=start/n_cols; let mut y2=end/n_cols;
+                let mut x1 = start%(n_cols); if x1==0{x1=n_cols;}
+                let mut x2 = end%(n_cols); if x2==0{x2=n_cols;}
+                if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+                let mut data = Vec::new();
+                for i in x1..x2+1{
+                    for j in y1..y2+1{
+                        data.push(self.database[(i + (j-1)*n_cols) as usize]);
+                    }
+                }
+                self.describe_data = utils::ui::stats::calculate_stats(&data);
+            }
+            });
+            ui.add_space(10.0);
+
+            let labels = [
+                "Count:",
+                "Mean:",
+                "Std Dev:",
+                "Min:",
+                "25%:",
+                "50%:",
+                "75%:",
+                "Max:",
+                // (count, mean, std, min, p25, p50, p75, max)
+            ];
+
+            for i in 0..labels.len() {
+            egui::Grid::new(format!("describe_grid_{}", i))
+                .num_columns(2)
+                .show(ui, |ui| {
+                    egui::Frame::new()
+                        
+                            .stroke(egui::Stroke::new(1.0, Color32::GRAY))
+                            .show(ui, |ui| {
+                                ui.add_sized([100.0, 35.0], 
+
+                                    egui::Label::new(RichText::new(format!("{}", labels[i])).font(FontId::proportional(20.0)))
+                                );
+                                
+                            });
+                            egui::Frame::new()
+                        
+                            .stroke(egui::Stroke::new(1.0, Color32::GRAY))
+                            .show(ui, |ui| {
+                                ui.add_sized([200.0, 35.0], 
+
+                                    egui::Label::new(RichText::new(format!("{}", self.describe_data[i])).font(FontId::proportional(20.0)))
+                                );
+                                
+                            });
+                    ui.end_row();
+                });
+            ui.add_space(10.0);
+            }
+        });
+        
+        // About dialog
+        egui::Window::new("About Rust Spreadsheet")
+            .open(&mut self.about_dialog)
+            .order(egui::Order::Foreground)
+            .fixed_size(egui::vec2(600.0, 400.0))
+            .collapsible(false)
+            .show(ctx, |ui| {
+                ui.add_space(10.0);
+                ui.label(RichText::new("Rust Spreadsheet Project").font(FontId::proportional(30.0)).color(Color32::from_rgb(0, 120, 215)));
+                ui.add_space(10.0);
+                ui.label(RichText::new("Version: 1.0.0").font(FontId::proportional(20.0)));
+                ui.add_space(10.0);
+                ui.label(RichText::new("Developed by:").font(FontId::proportional(20.0)));
+                ui.label(RichText::new("Rajat Soni: 2023CS10229").font(FontId::proportional(18.0)));
+                ui.label(RichText::new("Krish Bhiamni: 2023CS10712").font(FontId::proportional(18.0)));
+                ui.label(RichText::new("Priyanshu Gaurav").font(FontId::proportional(18.0)));
+                ui.label(RichText::new("IIT Delhi, Semester 4, COP290").font(FontId::proportional(18.0)));
+                ui.add_space(10.0);
+                ui.label(RichText::new("Description:").font(FontId::proportional(20.0)));
+                ui.label(RichText::new("This project is a spreadsheet application built purely using rust and the eframe/egui library. It supports various features such as saving, loading, plotting, and statistical analysis.").font(FontId::proportional(18.0)));
+                ui.add_space(10.0);
+                // ui.label(RichText::new("Contact:").font(FontId::proportional(20.0)));
+                // ui.label(RichText::new("Email: rustspreadsheet@iitd.ac.in").font(FontId::proportional(18.0)));
+                
+            });
+        
+
         egui::CentralPanel::default().show(ctx, |ui| {
             
             // if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)){
@@ -358,13 +546,19 @@ impl eframe::App for Spreadsheet {
             ui.add_space(10.0);
             // Header
             ui.horizontal(|ui| {
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/copy.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/paste.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/describe.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
+                // ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/copy.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
+                if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/info.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
+                    self.about_dialog = true;
+                };
+                if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/describe.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
+                    self.describe_dialog = true;
+                };
                 if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/plot.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
                     self.plot_dialog = true;
                 };
-                ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/pdf.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 })));
+                if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/pdf.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
+                    self.pdf_dialog = true;
+                };
                 if ui.add_sized([120.0,100.0],egui::Button::image(egui::Image::new(egui::include_image!("assets/folder.png")).fit_to_exact_size(egui::Vec2 { x: 100.0, y: 80.0 }))).clicked(){
                     self.load_dialog = true;
                 };
@@ -377,8 +571,8 @@ impl eframe::App for Spreadsheet {
                     ui.add_sized([310.0, 80.0], egui::Label::new(RichText::new(format!("Rust Spreadsheet Project\n\nDate: {}\nTime: {}",current_date,current_time)).font(FontId::proportional(20.0))));
             });});
             ui.horizontal(|ui| {
-                ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("Copy").font(FontId::proportional(15.0))));
-                ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("Paste").font(FontId::proportional(15.0))));
+                // ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("Copy").font(FontId::proportional(15.0))));
+                ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("About").font(FontId::proportional(15.0))));
                 ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("Describe").font(FontId::proportional(15.0))));
                 ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("Plot").font(FontId::proportional(15.0))));
                 ui.add_sized([120.0,4.0],egui::Label::new(RichText::new("PDF").font(FontId::proportional(15.0))));
