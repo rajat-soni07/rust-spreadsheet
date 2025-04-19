@@ -157,13 +157,25 @@ pub fn help_input(input:&str) -> Vec<String>{
         output[0].push(input_arr[i]);
         i+=1;
     }
-    i+=1;
 
     if is_arth(&input) {
+        i+=1;
         while i<n && input_arr[i]==' '{i+=1;}
         output[2].push(input_arr[i]);
         i+=1;
         let mut oper;
+        if i==n {
+            output[1].push('E');
+            output[1].push('Q');
+            if is_integer(&output[2]){
+                output[1].push('V');
+
+            }
+            else{
+                output[1].push('C');
+            }
+            return output;
+        }
         while i<n && (input_arr[i]!='*' && input_arr[i]!='/' && input_arr[i]!='+' && input_arr[i]!='-') {
             output[2].push(input_arr[i]);i+=1;
             if i==n {
@@ -171,14 +183,13 @@ pub fn help_input(input:&str) -> Vec<String>{
                 output[1].push('Q');
                 if is_integer(&output[2]){
                     output[1].push('V');
-
+    
                 }
                 else{
                     output[1].push('C');
                 }
                 return output;
             }
-
         }
 
         oper=input_arr[i];
