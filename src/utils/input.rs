@@ -161,7 +161,8 @@ pub fn help_input(input:&str) -> Vec<String>{
 
     if is_arth(&input) {
         while i<n && input_arr[i]==' '{i+=1;}
-
+        output[2].push(input_arr[i]);
+        i+=1;
         let mut oper;
         while i<n && (input_arr[i]!='*' && input_arr[i]!='/' && input_arr[i]!='+' && input_arr[i]!='-') {
             output[2].push(input_arr[i]);i+=1;
