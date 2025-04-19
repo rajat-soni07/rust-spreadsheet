@@ -223,6 +223,7 @@ pub fn help_input(input:&str) -> Vec<String>{
 
     }
     else{
+        i+=1;
         while i<n && input_arr[i]==' '{i+=1;}
         while i<n && input_arr[i]!='('{
             output[1].push(input_arr[i]);
