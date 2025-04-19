@@ -606,7 +606,7 @@ impl eframe::App for Spreadsheet {
                 }
 
                 if cell.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    let temp = format!("scroll_to({})", self.cell_ref.0);
+                    let temp = format!("scroll_to {}", self.cell_ref.0);
                     let out = utils::input::input(&temp, self.len_h, self.len_v);
                     let status = out[4].clone();
                     if status == "ok" && out[1] == "SRL" {   
