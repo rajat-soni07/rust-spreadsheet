@@ -1,262 +1,277 @@
-use regex::Regex;
+use crate::cell_to_int;
 
 
-use once_cell::sync::Lazy;
 
-
-static ARITHMETIC: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([A-Z]{1,3}[1-9][0-9]{0,2})\s*=\s*(-?[A-Z]{1,3}[1-9][0-9]{0,2}|-?\d+)\s*([+\-*/])\s*(-?[A-Z]{1,3}[1-9][0-9]{0,2}|-?\d+)$").unwrap()
-});
-
-static RANGEOP: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([A-Z]{1,3}[1-9][0-9]{0,2})\s*=\s*(MIN|MAX|AVG|SUM|STDEV)\s*\(\s*([A-Z]{1,3}[1-9][0-9]{0,2})\s*:\s*([A-Z]{1,3}[1-9][0-9]{0,2})\s*\)$").unwrap()
-});
-
-static ASSIGNMENT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([A-Z]{1,3}[1-9][0-9]{0,2})\s*=\s*(-?\d+|[A-Z]{1,3}[1-9][0-9]{0,2})$").unwrap()
-});
-
-static SLEEP: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^([A-Z]{1,3}[1-9][0-9]{0,2})\s*=\s*SLEEP\s*\(\s*([A-Z]{1,3}[1-9][0-9]{0,2}|\d+)\s*\)$").unwrap()
-});
-
-// Same for assignment, sleep, scroll_to
-static SCROLL_TO: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^scroll_to\s+([A-Z]{1,3}[1-9][0-9]{0,2})$").unwrap()
-});
-
-fn is_integer(inp: &String) -> bool {
-    let number = Regex::new(r"^-?\d+$").unwrap(); // regex for integer with optional unary minus
-    number.is_match(inp)
+fn is_arth(input:&str) -> bool {
+    for c in input.chars(){
+        if c=='('{
+            return false;
+        }
+    }
+    return true;
 }
 
-fn cell_to_int(a: &str) -> i32{
-    let mut col = 0;
-    let b = a.chars();
-    let mut part = 0;
-    for c in b.clone(){
-        if c.is_alphabetic() {
-            part += 1;
-        } else {
-            break;
+fn is_scroll(input:&str) ->bool{
+    // if input is found true by is_arth and it does not contain =, then it is scroll_to
+    for c in input.chars(){
+        if c=='='{return false;}
+    }
+    return true;
+}
+
+fn is_integer(input:&str)->bool{
+    //need to change
+    let mut first=1;
+    for c in input.chars(){
+        if first==1{
+            if c=='-' || c=='+'{continue;}
+            first=0;
+        }
+        
+        if c<'0' || c>'9'{
+            return false;
         }
     }
-
-    for i in a[..part].chars() {
-        let diff = i as i32 - 'A' as i32 + 1;
-        
-        
-        if (1..=26).contains(&diff) {
-            col *= 26;
-            col += diff;
-        } else {
-            
-            break;
-        }
-    }
-    
-    let row: i32 = a[part..].parse().unwrap_or(0);
-
-    col * 1000 + row
+    return true;
 }
 
 
 
+fn is_valid_cell(cell:&str, len_h:i32,len_v:i32) ->bool{
+    // input no of rows,no of cols
+    let n=cell.len();
+    if n<2{return false;}
+    let mut first=1;
+    let mut state=0;
+    for i in cell.chars(){
+        if first==1{
+            first=0;
+            if i<'A' || i>'Z'{
+                return false;
+            }
+            continue;
+        }
 
-fn is_valid_cell(cell: &str, n_rows:i32, n_cols:i32) -> bool {
-    let cell = cell_to_int(cell);
-    let row = cell % 1000;
-    let col = cell / 1000;
-    // println!("{cell} {row} {col}");
-    // println!("{} {} {}",row,col,cell);
-    // Check if the row and column are within the valid range
-    if row>=1 && row<=n_rows && col>=1 && col<=n_cols {
+        if state==0{
+            if i<'A' || i>'Z'{
+                state=1;
+            }
+        }
+        else{
+            if i<'0' || i>'9'{
+                return false;
+            }
+        }
+    }
+    if state==0{return false;}
+    let k=cell_to_int(&cell);
+    let r=k%1000;let c=k/1000;
+    if r<=len_v && c<=len_h{
         return true;
     }
-    false
+    return false;
 
 }
-fn is_valid_range(cell1 : &String, cell2 : &String, n_rows:i32, n_cols:i32) -> bool {
-    let cell1 = cell_to_int(cell1);
-    let cell2 = cell_to_int(cell2);
-    let row1 = cell1 % 1000;
-    let row2 = cell2 % 1000;
-    let col1 = cell1 / 1000;
-    let col2 = cell2 / 1000;
 
-    if row1>=1 && row1<=n_rows && col1>=1 && col1<=n_cols && row2>=1 && row2<=n_rows && col2>=1 && col2<=n_cols {
-        
-        return row1<=row2 && col1<=col2
+fn is_valid_range(cell1:&str, cell2:&str) ->bool{
+    let k1=cell_to_int(cell1); let r1=k1%1000; let c1=k1/1000;
+    let k2=cell_to_int(cell2); let r2=k2%1000; let c2=k2/1000;
+    if r1>r2 || c1>c2{
+        return false;
     }
-    false
-}
-
-pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
-
-    // () used in regex for capture
-    let mut output: Vec<String>=Vec::new();
-
-
-    if let Some(caps) = ARITHMETIC.captures(inp) {
-        let target_cell = caps[1].to_string();
-        let cell1  = caps[2].to_string();
-        let cell2  = caps[4].to_string();
-        let op = caps[3].to_string();
-        output.push(target_cell.clone());
-        output.push(String::new());
-        if is_integer(&cell1){
-            output[1].push('V');
-        }
-        else{
-            output[1].push('C');
-        }
-        if is_integer(&cell2){
-            output[1].push('V');
-        }
-        else{
-            output[1].push('C');
-        }
-
-        if op=="+"{
-            output[1].push('A');
-        }
-        else if op=="-"{
-            output[1].push('S');
-        }
-        else if op=="*"{
-            output[1].push('M');
-        }
-        else if op=="/"{
-            output[1].push('D');
-        }
-        output.push(cell1.clone());
-        output.push(cell2.clone());
-        if is_valid_cell(&target_cell, n_rows, n_cols) && (is_integer(&cell1) || is_valid_cell(&cell1, n_rows, n_cols)) && (is_integer(&cell2) || is_valid_cell(&cell2, n_rows, n_cols)){
-            output.push(String::from("ok"));
-        }
-        else{
-            output.push(String::from("Cell Out Of Bounds"));
-        }
-    }
-
-    else if let Some(caps) = RANGEOP.captures(inp) {
-        let target_cell = caps[1].to_string();
-        let mut operation = caps[2].to_string();
-        if operation=="STDEV"{
-            operation=String::from("STD");
-        }
-        if operation=="AVG"{
-            operation=String::from("MEA");
-        }
-        let cell1  = caps[3].to_string();
-        let cell2  = caps[4].to_string();
-        output.push(target_cell.clone());
-        output.push(operation);
-        output.push(cell1.clone());
-        output.push(cell2.clone());
-
-        if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_range(&cell1, &cell2, n_rows, n_cols){
-            output.push(String::from("ok"));
-        }
-        else if is_valid_cell(&target_cell, n_rows, n_cols){
-            // println!("{}",&target_cell);
-            output.push(String::from("Invalid Range"));
-        }
-        else{
-            // println!("{}",&target_cell);
-            output.push(String::from("Cell Out Of Bounds"));
-        }
-    }
-
-    else if let Some(caps) = ASSIGNMENT.captures(inp) {
-        let target_cell = caps[1].to_string();
-        let cell1  = caps[2].to_string();
-        output.push(target_cell.clone());
-        output.push(String::new());
-        if is_integer(&cell1){
-            output[1].push_str("EQV");
-        }
-        else{
-            output[1].push_str("EQC");
-        }
-        output.push(cell1.clone());
-        output.push(String::new());
-        if is_integer(&cell1){
-            if is_valid_cell(&target_cell, n_rows, n_cols){
-                output.push(String::from("ok"));
-            }
-            else{
-                output.push(String::from("Cell Out Of Bounds"));
-            }
-
-        }
-        else if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols){
-            output.push(String::from("ok"));
-        }
-        else{
-            output.push(String::from("Cell Out Of Bounds"));
-        }
-
-    }
-
-    else if let Some(caps) = SLEEP.captures(inp) {
-        let target_cell  = caps[1].to_string();
-        let cell1  = caps[2].to_string();
-        output.push(target_cell.clone());
-        output.push(String::from("SL"));
-        if is_integer(&cell1){
-            output[1].push('V');
-        }
-        else{
-            output[1].push('C');
-        }
-        output.push(cell1.clone());
-        output.push(String::new());
-
-        if is_integer(&cell1){
-            if is_valid_cell(&target_cell, n_rows, n_cols){
-                output.push(String::from("ok"));
-            }
-            else{
-                output.push(String::from("Cell Out Of Bounds"));
-            }
-
-        }
-        else if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols){
-            output.push(String::from("ok"));
-        }
-        else{
-            output.push(String::from("Cell Out Of Bounds"));
-        }
-    }
-
-    else if let Some(caps) = SCROLL_TO.captures(inp) {
-        let cell1  = caps[1].to_string();
-        output.push(cell1.clone());
-        output.push(String::from("SRL"));
-        output.push(String::new());
-        output.push(String::new());
-        if is_valid_cell(&cell1, n_rows, n_cols){
-            output.push(String::from("ok"));
-        }
-        else{
-            output.push(String::from("Cell Out Of Bounds"));
-        }
-    }
-
     else{
-        output.push(String::new());
-        output.push(String::new());
-        output.push(String::new());
-        output.push(String::new());
-        output.push(String::from("Invalid Input"));
+        return true;
     }
-    output
 }
 
 
-// pub fn main2(){
-//     let s =String::from( "A3 = A4 + 5");
-//     let outp = input(&s,10,10);
-//     println!("{:?}",outp)
+fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String{
+    let mut message = String::from("ok");
+    if output[1].len()!=3{
+        message = String::from("Invalid Operation");return message;
+    }
+    if output[1]=="SRL"{
+        let mut temp=String::new();
+        for i in input.chars(){
+            if i==' '{
+                break;
+            }
+            temp.push(i);
+        }
+        if temp!="scroll_to"{
+            message = String::from("Invalid Operation");
+        }
+    }
+    else{
+        if is_valid_cell(&output[0], len_h, len_v)==false{
+            message = String::from("Assigned Cell out of bounds");return message;
+        }
+
+        if output[0]=="SLC"{
+            if is_valid_cell(&output[2], len_h, len_v){
+                message = String::from("Invalid Cell");return message;
+            }
+        else if output[0]=="EQC"{
+            if is_valid_cell(&output[2], len_h, len_v)==false{
+                message = String::from("Invalid Cell");return message;
+            }
+        }
+        else if output[0]=="SLV"{return message;}
+        else if output[0]=="EQV" {return message;}
+        else{
+            return message;
+        }
+
+
+
+
+    }}
+
+
+return message
+}
+
+
+pub fn help_input(input:&str) -> Vec<String>{
+    let mut output= vec![String::new(); 4];
+    let input_arr: Vec<char> = input.chars().collect();
+    let n = input_arr.len();
+    if is_scroll(&input){
+        let mut i=0;
+        output[1]=String::from("SRL");
+        while i<n && input_arr[i]!=' '{
+            i+=1;
+        }
+        // put the cell in output[0]- target cell
+        i+=1;
+        while i<n{
+
+            output[0].push(input_arr[i]);
+            i+=1;
+        }
+        return output;
+    }
+    let mut i=0;
+
+    while i<n && input_arr[i]!='='{
+        output[0].push(input_arr[i]);
+        i+=1;
+    }
+    i+=1;
+
+    if is_arth(&input) {
+        while i<n && input_arr[i]==' '{i+=1;}
+
+        let mut oper;
+        while i<n && (input_arr[i]!='*' && input_arr[i]!='/' && input_arr[i]!='+' && input_arr[i]!='-') {
+            output[2].push(input_arr[i]);i+=1;
+            if i==n {
+                output[1].push('E');
+                output[1].push('Q');
+                if is_integer(&output[2]){
+                    output[1].push('V');
+
+                }
+                else{
+                    output[1].push('C');
+                }
+                return output;
+            }
+
+        }
+
+        oper=input_arr[i];
+        if oper=='+'{
+            oper='A';
+        }
+        else if oper=='-'{
+            oper='S';
+        }
+        else if oper=='*'{
+            oper='M';
+        }
+        else if oper=='/'{
+            oper='D';
+        }
+        i+=1;
+        while input_arr[i]==' '{i+=1;}
+        while i<n {output[3].push(input_arr[i]); i+=1;}
+
+        if is_integer(&output[2]){
+            output[1].push('V');
+        }
+        else{output[1].push('C');}
+
+        if is_integer(&output[3]){
+            output[1].push('V');
+        }
+        else{output[1].push('C');}
+
+        output[1].push(oper);
+
+    }
+    else{
+        while i<n && input_arr[i]==' '{i+=1;}
+        while i<n && input_arr[i]!='('{
+            output[1].push(input_arr[i]);
+            i+=1;
+        }
+        i+=1;
+        if output[1]==String::from("SLEEP"){
+            output[1]=String::from("SL");
+            while i<n && input_arr[i]!=')'{
+                output[2].push(input_arr[i]);
+                i+=1;
+        }}
+
+        else{
+            while i<n && input_arr[i]!=':'{
+                output[2].push(input_arr[i]);
+                i+=1;
+            }
+            i+=1;
+            while i<n && input_arr[i]!=')'{
+                output[3].push(input_arr[i]);
+                i+=1;
+            }
+        }
+
+
+    }
+
+    if output[1]==String::from("STDEV"){
+        output[1]=String::from("STD");
+    }
+    else if output[1]==String::from("AVG"){
+        output[1]=String::from("MEA");
+    }
+    else if output[1]==String::from("SL"){
+        if is_integer(&output[2]){
+            output[1].push('V');
+        }
+        else{
+            output[1].push('C');
+        }
+    }
+
+
+    return output;
+}
+
+
+pub fn input(input:&str,len_h:i32,len_v : i32) -> Vec<String>{
+    let mut output=help_input(input);
+
+    output.push(String::from("ok"));
+    return output;
+
+}
+// fn main(){
+//     let outp=is_integer(&String::from("1"));
+//     // println!("{}",outp);
+//     let inp = String::from("A1 = 1");
+//     let output = input(&inp,55,55);
+//     for i in 0..5{
+//         println!("{}",output[i]);
+//     }
 // }
