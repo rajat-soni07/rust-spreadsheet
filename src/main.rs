@@ -177,6 +177,20 @@ fn calc(cell: i32, database: &mut Vec<i32>, opers: &Vec<OPS>, len_h: i32, err: &
         "STD" => {
             database[cell as usize] = utils::operations::stdev(opers[cell as usize].cell1, opers[cell as usize].cell2, database, len_h, err, cell);
         },
+        "SLV" =>{
+            std::thread::sleep(std::time::Duration::from_secs(max(0,opers[cell as usize].cell1) as u64));
+            database[cell as usize] = opers[cell as usize].cell1;
+            err[cell as usize] = false;
+        }
+        "SLC" =>{
+            if err[opers[cell as usize].cell1 as usize]{
+                err[cell as usize] = true;
+            }else{
+                std::thread::sleep(std::time::Duration::from_secs(max(0,database[opers[cell as usize].cell1 as usize]) as u64));
+                database[cell as usize] = database[opers[cell as usize].cell1 as usize];
+                err[cell as usize] = false;
+            }
+        }
         _ => {}
     }
 }
@@ -507,15 +521,16 @@ fn non_ui(len_h: i32, len_v: i32) {
 
     utils::display::display_grid(curr_h, curr_v, len_h, len_v, &database, &err);
 
-    
+    let mut time = 0.0;
     loop{
-        print!("[{}] ({}) > ",0,status);
+        print!("[{:.1}] ({}) > ", time, status);
         io::stdout().flush().unwrap();
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Failed to read line");
         let input = input.trim_end().to_string();
-
+        let start_time = std::time::Instant::now();
         match input.as_str() {
+
             "w" => {
                 curr_v = max(1,curr_v-10);
             },
@@ -533,8 +548,10 @@ fn non_ui(len_h: i32, len_v: i32) {
             },
             "disable_output" => {
                 dis = true;
+                status = "ok".to_string();
             },
             "enable_output" => {
+                status = "ok".to_string();
                 dis = false;
             },
             _ => {
@@ -558,6 +575,8 @@ fn non_ui(len_h: i32, len_v: i32) {
                 }
             }
         }
+        let end_time = std::time::Instant::now();
+        time = (end_time - start_time).as_secs_f64();
 
         if dis{
             continue;
