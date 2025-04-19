@@ -27,7 +27,7 @@ pub fn scatter_plot(data: &Vec<(f64, f64)>,path:&str) -> Result<(), Box<dyn std:
     root.fill(&WHITE)?;
 
     // Extract bounds
-    let (x_range, y_range) = auto_range(&data);   
+    let (x_range, y_range) = auto_range(data);   
 
     let mut chart = ChartBuilder::on(&root)
         .caption("Scatter Plot (Auto Axes)", ("Arial", 30).into_font())
@@ -53,7 +53,7 @@ pub fn line_plot(data: &Vec<(f64, f64)>,path:&str) -> Result<(), Box<dyn std::er
     root.fill(&WHITE)?;
 
 
-    let (x_range, y_range) = auto_range(&data);
+    let (x_range, y_range) = auto_range(data);
 
     let mut chart = ChartBuilder::on(&root)
         .caption("Line Plot", ("Arial", 30).into_font())

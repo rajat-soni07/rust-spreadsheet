@@ -5,13 +5,13 @@ fn shift_char(c:char, i: i32)-> char{
 pub fn get_label(a : i32)-> String{
     let mut temp = String::new();
     let mut num = a-1;
-    if 0 <= num && num <= 25 {
+    if (0..=25).contains(&num) {
         temp.push(shift_char('A', num));
-    } else if 26 <= num && num <= 701 {
+    } else if (26..=701).contains(&num) {
         num-=26;
         temp.push(shift_char('A', num/26));
         temp.push(shift_char('A', num%26));
-    } else if 702 <= num && num <= 18277 {
+    } else if (702..=18277).contains(&num) {
         num-=702;
         let c = shift_char('A', num%26);
         num/=26;
@@ -50,8 +50,4 @@ pub fn display_grid(top_h: i32,top_v: i32,len_h: i32, len_v:i32, database: &Vec<
         }}
         println!();
     }
-
-
-
-    return;
 }

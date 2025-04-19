@@ -44,7 +44,7 @@ fn cell_to_int(a: &str) -> i32{
         let diff = i as i32 - 'A' as i32 + 1;
         
         
-        if 1<=diff && diff<=26 {
+        if (1..=26).contains(&diff) {
             col *= 26;
             col += diff;
         } else {
@@ -72,7 +72,7 @@ fn calc(cell: i32, database: &mut Vec<i32>, opers: &Vec<OPS>, len_h: i32, err: &
             let cell1 = opers[cell as usize].cell1 as usize;
             let cell2 = opers[cell as usize].cell2 as usize;
             err[cell as usize] = err[cell1] || err[cell2];
-            database[cell as usize] = database[cell1 as usize] + database[cell2 as usize];
+            database[cell as usize] = database[cell1] + database[cell2];
         },
         "CVA" => {
             let cell1 = opers[cell as usize].cell1 as usize;
@@ -286,29 +286,21 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
     // Adding items to sensitivity list
 
     // Handling arithmetic
-    if inp_arr[1].starts_with('C') {
-        if sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32 {
-            sensi[opers[target].cell1 as usize].push(target as i32);
-        }
+    if inp_arr[1].starts_with('C') && (sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32) {
+        sensi[opers[target].cell1 as usize].push(target as i32);
     }
 
-    if inp_arr[1].chars().nth(1) == Some('C') {
-        if sensi[opers[target].cell2 as usize].is_empty() || *sensi[opers[target].cell2 as usize].last().unwrap() != target as i32 {
-            sensi[opers[target].cell2 as usize].push(target as i32);
-        }
+    if inp_arr[1].chars().nth(1) == Some('C') && (sensi[opers[target].cell2 as usize].is_empty() || *sensi[opers[target].cell2 as usize].last().unwrap() != target as i32) {
+        sensi[opers[target].cell2 as usize].push(target as i32);
     }
 
     // Handling eq
-    if inp_arr[1] == "EQC" {
-        if sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32 {
-            sensi[opers[target].cell1 as usize].push(target as i32);
-        }
+    if inp_arr[1] == "EQC" && (sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32) {
+        sensi[opers[target].cell1 as usize].push(target as i32);
     }
 
-    if inp_arr[1] == "SLC" {
-        if sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32 {
-            sensi[opers[target].cell1 as usize].push(target as i32);
-        }
+    if inp_arr[1] == "SLC" && (sensi[opers[target].cell1 as usize].is_empty() || *sensi[opers[target].cell1 as usize].last().unwrap() != target as i32) {
+        sensi[opers[target].cell1 as usize].push(target as i32);
     }
 
     // Handling ranges
@@ -350,7 +342,7 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
     }
     }
 
-    let topo = utils::toposort::topo_sort(&sensi, target as i32, indegree);
+    let topo = utils::toposort::topo_sort(sensi, target as i32, indegree);
 
     if topo[0] == -1 {
         // Removing items from sensitivity list
@@ -427,30 +419,22 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
 
         // Adding back older values
 
-        if rev.opcpde.starts_with('C') {
-            if sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32 {
-                sensi[rev.cell1 as usize].push(target as i32);
-            }
+        if rev.opcpde.starts_with('C') && (sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32) {
+            sensi[rev.cell1 as usize].push(target as i32);
         }
 
-        if rev.opcpde.chars().nth(1) == Some('C') {
-            if sensi[rev.cell2 as usize].is_empty() || *sensi[rev.cell2 as usize].last().unwrap() != target as i32 {
-                sensi[rev.cell2 as usize].push(target as i32);
-            }
+        if rev.opcpde.chars().nth(1) == Some('C') && (sensi[rev.cell2 as usize].is_empty() || *sensi[rev.cell2 as usize].last().unwrap() != target as i32) {
+            sensi[rev.cell2 as usize].push(target as i32);
         }
 
         // Handling eq
-        if rev.opcpde == "EQC" {
-            if sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32 {
-                sensi[rev.cell1 as usize].push(target as i32);
-            }
+        if rev.opcpde == "EQC" && (sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32) {
+            sensi[rev.cell1 as usize].push(target as i32);
         }
 
         // Handling sleep
-        if rev.opcpde == "SLC" {
-            if sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32 {
-                sensi[rev.cell1 as usize].push(target as i32);
-            }
+        if rev.opcpde == "SLC" && (sensi[rev.cell1 as usize].is_empty() || *sensi[rev.cell1 as usize].last().unwrap() != target as i32) {
+            sensi[rev.cell1 as usize].push(target as i32);
         }
 
         // Handling ranges
@@ -495,10 +479,10 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
             ..rev
         };
 
-        return 0;
+        0
     } else {
         val_update(&topo, database, opers, len_h, err);
-        return  1;
+        1
     }
 
 
@@ -538,10 +522,10 @@ fn non_ui(len_h: i32, len_v: i32) {
                 curr_h = max(1,curr_h-10);
             },
             "s" => {
-                if curr_v+10>len_v{curr_v = len_v - 9}else{curr_v = curr_v +10}
+                if curr_v+10>len_v{curr_v = len_v - 9}else{curr_v += 10}
             },
             "d" => {
-                if curr_h+10>len_h{curr_h = len_h - 9}else{curr_h = curr_h +10}
+                if curr_h+10>len_h{curr_h = len_h - 9}else{curr_h += 10}
             },
             "q" => {
                 break;

@@ -8,7 +8,7 @@ pub fn min(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
     let mut yn=false;
     for i in x1..x2+1{
         for j in y1..y2+1{
-            yn = yn | err[(i + (j-1)*n_cols) as usize];
+            yn |= err[(i + (j-1)*n_cols) as usize];
             if (data_base[(i + (j-1)*n_cols) as usize])<ans{
                 ans = data_base[(i + (j-1)*n_cols) as usize];
             }
@@ -29,14 +29,14 @@ pub fn max(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
     let mut yn=false;
     for i in x1..x2+1{
         for j in y1..y2+1{
-            yn = yn | err[(i + (j-1)*n_cols) as usize];
+            yn |= err[(i + (j-1)*n_cols) as usize];
             if data_base[(i + (j-1)*n_cols) as usize]>ans{
                 ans = data_base[(i + (j-1)*n_cols) as usize];
             }
         }
     }
     err[dest as usize] = yn;
-    return ans;
+    ans
 
 }
 
@@ -50,12 +50,12 @@ pub fn sum(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
     let mut yn=false;
     for i in x1..x2+1{
         for j in y1..y2+1{
-            yn = yn | err[(i + (j-1)*n_cols) as usize];
+            yn |= err[(i + (j-1)*n_cols) as usize];
             ans += data_base[(i + (j-1)*n_cols) as usize];
         }
     }
     err[dest as usize] = yn;
-    return ans;
+    ans
 
 }
 
@@ -71,12 +71,12 @@ pub fn avg(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
     for i in x1..x2+1{
         for j in y1..y2+1{
             ct += 1;
-            yn = yn | err[(i + (j-1)*n_cols) as usize];
+            yn |= err[(i + (j-1)*n_cols) as usize];
             ans += data_base[(i + (j-1)*n_cols) as usize];
         }
     }
     err[dest as usize] = yn;
-    return ans/ct;
+    ans/ct
 
 }
 
@@ -91,21 +91,21 @@ pub fn stdev(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<b
     for i in x1..x2+1{
         for j in y1..y2+1{
             ct += 1;
-            yn = yn | err[(i + (j-1)*n_cols) as usize];
+            yn |= err[(i + (j-1)*n_cols) as usize];
             ans += data_base[(i + (j-1)*n_cols) as usize];
         }
     }
     let mean= ans/ct;
     for i in x1..x2+1{
         for j in y1..y2+1{
-            yn = yn | err[(i + (j-1)*n_cols) as usize];
+            yn |= err[(i + (j-1)*n_cols) as usize];
             var += (data_base[(i + (j-1)*n_cols) as usize]- mean) as f64 * (data_base[(i + (j-1)*n_cols) as usize]-mean) as f64;
         }
     }
-    var = var/(ct as f64);
+    var /= ct as f64;
     err[dest as usize] = yn;
 
-    return var.sqrt() as i32;
+    var.sqrt() as i32
 
 
 }

@@ -196,7 +196,7 @@ impl eframe::App for Spreadsheet {
             });
         });
 
-        if self.save_todo != None{
+        if self.save_todo.is_some(){
             println!("{:?}",self.save_todo);
             let (save_type, path) = self.save_todo.clone().unwrap();
             self.save_todo = None;
@@ -342,7 +342,7 @@ impl eframe::App for Spreadsheet {
                 {
                     // Windows: Use "start" to open the image
                     std::process::Command::new("cmd")
-                        .args(&["/C", "start", &self.plot_save])
+                        .args(["/C", "start", &self.plot_save])
                         .spawn()
                         .expect("Failed to open image");
                 }
@@ -437,8 +437,8 @@ impl eframe::App for Spreadsheet {
                 let mut end = 0;
                 if range.contains(':'){
                     let parts: Vec<&str> = range.split(':').collect();
-                    start = crate::cell_to_ind(parts[0],self.len_h) as i32;
-                    end = crate::cell_to_ind(parts[1],self.len_h) as i32;
+                    start = crate::cell_to_ind(parts[0],self.len_h);
+                    end = crate::cell_to_ind(parts[1],self.len_h);
                 }
                 let n_cols= self.len_h;
                 let mut y1=start/n_cols; let mut y2=end/n_cols;
@@ -478,7 +478,7 @@ impl eframe::App for Spreadsheet {
                             .show(ui, |ui| {
                                 ui.add_sized([100.0, 35.0], 
 
-                                    egui::Label::new(RichText::new(format!("{}", labels[i])).font(FontId::proportional(20.0)))
+                                    egui::Label::new(RichText::new(labels[i].to_string()).font(FontId::proportional(20.0)))
                                 );
                                 
                             });
@@ -593,7 +593,7 @@ impl eframe::App for Spreadsheet {
                 }
 
                 if cell.gained_focus() {
-                    if self.selected_cell != None {
+                    if self.selected_cell.is_some() {
                         self.cell_ref.0 = format!("{}{}",utils::display::get_label(self.selected_cell.unwrap()%self.len_h), self.selected_cell.unwrap()/self.len_h + 1);
                     }else{
                         
@@ -608,34 +608,32 @@ impl eframe::App for Spreadsheet {
                     let temp = format!("scroll_to({})", self.cell_ref.0);
                     let out = utils::input::input(&temp, self.len_h, self.len_v);
                     let status = out[4].clone();
-                    if status == "ok" {
-                        if out[1] == "SRL"{   
-                            let t = crate::cell_to_ind(out[0].as_str(), self.len_h);
-                            let mut x1 = t%self.len_h; if x1==0{x1=self.len_h;}
-                            let y1 = t/self.len_h + ((x1!=self.len_h) as i32);
+                    if status == "ok" && out[1] == "SRL" {   
+                        let t = crate::cell_to_ind(out[0].as_str(), self.len_h);
+                        let mut x1 = t%self.len_h; if x1==0{x1=self.len_h;}
+                        let y1 = t/self.len_h + ((x1!=self.len_h) as i32);
 
-                            if x1 < self.top_h || x1 >= self.top_h + 10 || y1 < self.top_v || y1 >= self.top_v + 10 {
-                                let mut shift_h = 0;
-                                let mut shift_v = 0;
+                        if x1 < self.top_h || x1 >= self.top_h + 10 || y1 < self.top_v || y1 >= self.top_v + 10 {
+                            let mut shift_h = 0;
+                            let mut shift_v = 0;
 
-                                if x1 < self.top_h {
-                                    shift_h = x1 - self.top_h;
-                                } else if x1 >= self.top_h + 10 {
-                                    shift_h = x1 - (self.top_h + 9);
-                                }
-
-                                if y1 < self.top_v {
-                                    shift_v = y1 - self.top_v;
-                                } else if y1 >= self.top_v + 10 {
-                                    shift_v = y1 - (self.top_v + 9);
-                                }
-
-                                self.top_h += shift_h;
-                                self.top_v += shift_v;
+                            if x1 < self.top_h {
+                                shift_h = x1 - self.top_h;
+                            } else if x1 >= self.top_h + 10 {
+                                shift_h = x1 - (self.top_h + 9);
                             }
-                            self.selected_cell = Some(t);
-                            self.temp_txt.1 = true;
+
+                            if y1 < self.top_v {
+                                shift_v = y1 - self.top_v;
+                            } else if y1 >= self.top_v + 10 {
+                                shift_v = y1 - (self.top_v + 9);
+                            }
+
+                            self.top_h += shift_h;
+                            self.top_v += shift_v;
                         }
+                        self.selected_cell = Some(t);
+                        self.temp_txt.1 = true;
                     }
                     self.cell_ref.1 = false;
                 };
@@ -643,21 +641,19 @@ impl eframe::App for Spreadsheet {
 
                 
                 
-                if self.selected_cell != None {
+                if self.selected_cell.is_some() {
                     self.cell_ref.0 = format!("{}{}",utils::display::get_label(self.selected_cell.unwrap()%self.len_h), self.selected_cell.unwrap()/self.len_h + 1);
+                }else if self.hovered_cell.is_some(){
+                    self.cell_ref.0 = format!("{}{}",utils::display::get_label(self.hovered_cell.unwrap()%self.len_h), self.hovered_cell.unwrap()/self.len_h + 1);
                 }else{
-                    if self.hovered_cell!=None{
-                        self.cell_ref.0 = format!("{}{}",utils::display::get_label(self.hovered_cell.unwrap()%self.len_h), self.hovered_cell.unwrap()/self.len_h + 1);
-                    }else{
-                    self.cell_ref.0 = String::new();
-                    }
+                self.cell_ref.0 = String::new();
                 }
                 
                 
                 egui::Frame::new()
                     .stroke(egui::Stroke::new(1.0, Color32::GRAY))
                     .show(ui, |ui| {
-                        let cell = ui.add_sized([210.0,30.0], egui::Label::new(RichText::new(format!("{}",self.cell_ref.0)).font(FontId::proportional(20.0))));
+                        let cell = ui.add_sized([210.0,30.0], egui::Label::new(RichText::new(self.cell_ref.0.to_string()).font(FontId::proportional(20.0))));
                         
                         
                         if cell.clicked() {
@@ -677,7 +673,7 @@ impl eframe::App for Spreadsheet {
             egui::Frame::new()
             .stroke(egui::Stroke::new(1.0, Color32::GRAY))
             .show(ui, |ui| {
-                ui.add_sized([950.0,30.0], egui::Label::new(RichText::new(format!("{}",self.temp_txt.0)).font(FontId::proportional(20.0))));
+                ui.add_sized([950.0,30.0], egui::Label::new(RichText::new(self.temp_txt.0.to_string()).font(FontId::proportional(20.0))));
                 });
             });
 
@@ -695,7 +691,7 @@ impl eframe::App for Spreadsheet {
                             .show(ui, |ui| {
                                 ui.add_sized([70.0, 35.0], 
 
-                                    egui::Label::new(RichText::new(format!("")).font(FontId::proportional(20.0)))
+                                    egui::Label::new(RichText::new(String::new()).font(FontId::proportional(20.0)))
                                 );
                                 
                             });
@@ -707,7 +703,7 @@ impl eframe::App for Spreadsheet {
                             .show(ui, |ui| {
                                 ui.add_sized([100.0, 35.0], 
 
-                                    egui::Label::new(RichText::new(format!("{}", utils::display::get_label(col+self.top_h))).font(FontId::proportional(20.0)))
+                                    egui::Label::new(RichText::new(utils::display::get_label(col+self.top_h).to_string()).font(FontId::proportional(20.0)))
                                 );
                                 
                             });
@@ -745,7 +741,7 @@ impl eframe::App for Spreadsheet {
                             
                                 .stroke(egui::Stroke::new(1.0, Color32::GRAY))
                                 .show(ui, |ui| {
-                                    if self.selected_cell == None || (self.selected_cell.unwrap() != ind) {
+                                    if self.selected_cell.is_none() || (self.selected_cell.unwrap() != ind) {
                                     let frame = ui.add_sized([100.0, 45.0], 
                                         
                                         egui::Label::new(RichText::new(data)
@@ -779,7 +775,7 @@ impl eframe::App for Spreadsheet {
                                     }
 
                                     if field.gained_focus(){
-                                        self.temp_txt.0 = format!("{}",self.formula[ind as usize]);
+                                        self.temp_txt.0 = self.formula[ind as usize].to_string();
                                         
                                     }
 
@@ -793,12 +789,10 @@ impl eframe::App for Spreadsheet {
                                         self.selected_cell = None;
                                         let out = utils::input::input(&self.temp_txt.0, self.len_h, self.len_v);
                                         let status = out[4].clone();
-                                        if status == "ok" {
-                                            if out[1] != "SRL"{   
-                                                let suc = crate::cell_update(&out, &mut self.database, &mut self.sensi, &mut self.opers, self.len_h, &mut self.indegree, &mut self.err);
-                                                if suc==0{
-                                                    // Write code for error here
-                                                }
+                                        if status == "ok" && out[1] != "SRL" {   
+                                            let suc = crate::cell_update(&out, &mut self.database, &mut self.sensi, &mut self.opers, self.len_h, &mut self.indegree, &mut self.err);
+                                            if suc==0{
+                                                // Write code for error here
                                             }
                                         }
                                         self.temp_txt.0 = String::new();

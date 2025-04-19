@@ -70,7 +70,7 @@ pub fn save_1d_as_pdf(data: &Vec<i32>,err: &Vec<bool>,len_h: i32,len_v: i32,file
     let total_pages = hz*vz;
     for top_h in 0..hz{
         for top_v in 0..vz{
-            let mut table = elements::TableLayout::new(vec![1; 10 as usize]);
+            let mut table = elements::TableLayout::new(vec![1; 10_usize]);
             table.set_cell_decorator(elements::FrameCellDecorator::new(true, true, false));
             for j in 1..=10 {
                 let mut row = table.row();

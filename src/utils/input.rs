@@ -46,7 +46,7 @@ fn cell_to_int(a: &str) -> i32{
         let diff = i as i32 - 'A' as i32 + 1;
         
         
-        if 1<=diff && diff<=26 {
+        if (1..=26).contains(&diff) {
             col *= 26;
             col += diff;
         } else {
@@ -86,14 +86,9 @@ fn is_valid_range(cell1 : &String, cell2 : &String, n_rows:i32, n_cols:i32) -> b
 
     if row1>=1 && row1<=n_rows && col1>=1 && col1<=n_cols && row2>=1 && row2<=n_rows && col2>=1 && col2<=n_cols {
         
-        if row1<=row2 && col1<=col2{
-            return true;
-        }
-        else{
-            return false;
-        }
+        return row1<=row2 && col1<=col2
     }
-    return false;
+    false
 }
 
 pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
@@ -110,29 +105,29 @@ pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
         output.push(target_cell.clone());
         output.push(String::new());
         if is_integer(&cell1){
-            output[1].push_str("V");
+            output[1].push('V');
         }
         else{
-            output[1].push_str("C");
+            output[1].push('C');
         }
         if is_integer(&cell2){
-            output[1].push_str("V");
+            output[1].push('V');
         }
         else{
-            output[1].push_str("C");
+            output[1].push('C');
         }
 
         if op=="+"{
-            output[1].push_str("A");
+            output[1].push('A');
         }
         else if op=="-"{
-            output[1].push_str("S");
+            output[1].push('S');
         }
         else if op=="*"{
-            output[1].push_str("M");
+            output[1].push('M');
         }
         else if op=="/"{
-            output[1].push_str("D");
+            output[1].push('D');
         }
         output.push(cell1.clone());
         output.push(cell2.clone());
@@ -163,15 +158,13 @@ pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
         if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_range(&cell1, &cell2, n_rows, n_cols){
             output.push(String::from("ok"));
         }
+        else if is_valid_cell(&target_cell, n_rows, n_cols){
+            // println!("{}",&target_cell);
+            output.push(String::from("Invalid Range"));
+        }
         else{
-            if is_valid_cell(&target_cell, n_rows, n_cols){
-                // println!("{}",&target_cell);
-                output.push(String::from("Invalid Range"));
-            }
-            else{
-                // println!("{}",&target_cell);
-                output.push(String::from("Cell Out Of Bounds"));
-            }
+            // println!("{}",&target_cell);
+            output.push(String::from("Cell Out Of Bounds"));
         }
     }
 
@@ -197,13 +190,11 @@ pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
             }
 
         }
+        else if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols){
+            output.push(String::from("ok"));
+        }
         else{
-            if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols){
-                output.push(String::from("ok"));
-            }
-            else{
-                output.push(String::from("Cell Out Of Bounds"));
-            }
+            output.push(String::from("Cell Out Of Bounds"));
         }
 
     }
@@ -214,10 +205,10 @@ pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
         output.push(target_cell.clone());
         output.push(String::from("SL"));
         if is_integer(&cell1){
-            output[1].push_str("V");
+            output[1].push('V');
         }
         else{
-            output[1].push_str("C");
+            output[1].push('C');
         }
         output.push(cell1.clone());
         output.push(String::new());
@@ -231,13 +222,11 @@ pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
             }
 
         }
+        else if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols){
+            output.push(String::from("ok"));
+        }
         else{
-            if is_valid_cell(&target_cell, n_rows, n_cols) && is_valid_cell(&cell1, n_rows, n_cols){
-                output.push(String::from("ok"));
-            }
-            else{
-                output.push(String::from("Cell Out Of Bounds"));
-            }
+            output.push(String::from("Cell Out Of Bounds"));
         }
     }
 
@@ -262,7 +251,7 @@ pub fn input(inp: &String,n_cols:i32,n_rows:i32) -> Vec<String> {
         output.push(String::new());
         output.push(String::from("Invalid Input"));
     }
-    return output;
+    output
 }
 
 
