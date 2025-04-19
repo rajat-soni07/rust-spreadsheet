@@ -4,14 +4,14 @@ fn auto_range(data: &[(f64, f64)]) -> (std::ops::Range<f64>, std::ops::Range<f64
     let (min_x, max_x) = data.iter().map(|(x, _)| *x).fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), x| (min.min(x), max.max(x)));
     let (min_y, max_y) = data.iter().map(|(_, y)| *y).fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), y| (min.min(y), max.max(y)));
 
-    let x_range = if (max_x - min_x).abs() < std::f64::EPSILON {
+    let x_range = if (max_x - min_x).abs() < f64::EPSILON {
         (min_x - 1.0)..(max_x + 1.0)
     } else {
         let margin = (max_x - min_x) * 0.1;
         (min_x - margin)..(max_x + margin)
     };
 
-    let y_range = if (max_y - min_y).abs() < std::f64::EPSILON {
+    let y_range = if (max_y - min_y).abs() < f64::EPSILON {
         (min_y - 1.0)..(max_y + 1.0)
     } else {
         let margin = (max_y - min_y) * 0.1;
@@ -22,7 +22,7 @@ fn auto_range(data: &[(f64, f64)]) -> (std::ops::Range<f64>, std::ops::Range<f64
 }
 
 
-pub fn scatter_plot(data: &Vec<(f64, f64)>,path:&str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn scatter_plot(data: &[(f64, f64)],path:&str) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new(path, (800, 600)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -48,7 +48,7 @@ pub fn scatter_plot(data: &Vec<(f64, f64)>,path:&str) -> Result<(), Box<dyn std:
     Ok(())
 }
 
-pub fn line_plot(data: &Vec<(f64, f64)>,path:&str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn line_plot(data: &[(f64, f64)],path:&str) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new(path, (800, 600)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -64,7 +64,7 @@ pub fn line_plot(data: &Vec<(f64, f64)>,path:&str) -> Result<(), Box<dyn std::er
 
     chart.configure_mesh().draw()?;
 
-    chart.draw_series(LineSeries::new(data.clone(), &BLUE))?;
+    chart.draw_series(LineSeries::new(data.to_owned(), &BLUE))?;
     chart.draw_series(data.iter().map(|(x, y)| Circle::new((*x, *y), 3, BLUE.filled())))?;
 
     Ok(())

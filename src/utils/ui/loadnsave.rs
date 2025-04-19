@@ -25,7 +25,7 @@ pub fn read_from_file(path: &str) -> ui::ui::Spreadsheet {
     spreadsheet
 }
 
-pub fn save_1d_as_csv(data: &Vec<i32>,err: &Vec<bool>, len_h: i32, len_v:i32, filename: &str) -> Result<(), Box<dyn Error>> {
+pub fn save_1d_as_csv(data: &[i32],err: &[bool], len_h: i32, len_v:i32, filename: &str) -> Result<(), Box<dyn Error>> {
     let mut wtr = Writer::from_path(filename)?;
 
     for j in 1..=len_v {
@@ -45,7 +45,7 @@ pub fn save_1d_as_csv(data: &Vec<i32>,err: &Vec<bool>, len_h: i32, len_v:i32, fi
     Ok(())
 }
 
-pub fn save_1d_as_pdf(data: &Vec<i32>,err: &Vec<bool>,len_h: i32,len_v: i32,filename: &str,) -> Result<(), Box<dyn Error>> {
+pub fn save_1d_as_pdf(data: &[i32],err: &[bool],len_h: i32,len_v: i32,filename: &str,) -> Result<(), Box<dyn Error>> {
     // Load font
     // println!("{:?}", std::fs::canonicalize("./src/utils/ui/assets/ARIAL.ttf"));
     let font = genpdf::fonts::from_files("./src/utils/ui/assets", "ARIAL", None)?;
@@ -76,12 +76,12 @@ pub fn save_1d_as_pdf(data: &Vec<i32>,err: &Vec<bool>,len_h: i32,len_v: i32,file
                 let mut row = table.row();
                 // let mut row = Vec::with_capacity(len_h as usize);
                 for i in 1..=10 {
-                    let index ;
+                    let index=
                     if top_h*10+i > len_h || top_v*10+j > len_v{
-                        index = 0;
+                        0
                     }else{
-                        index = ((top_v*10 + j-1) * len_h + i + top_h*10) as usize;
-                    }
+                        ((top_v*10 + j-1) * len_h + i + top_h*10) as usize
+                    };
                     let cell = if err[index] {
                         "ERR".to_string()
                     } else {

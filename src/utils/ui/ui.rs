@@ -6,12 +6,12 @@ use notify_rust::Notification;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug,PartialEq,Clone)]
 enum Save {
-    RSK,
-    CSV
+    Rsk,
+    Csv
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug,PartialEq,Clone)]
-enum PLOT {
+enum Plot {
     Line,
     Scatter
 }
@@ -53,7 +53,7 @@ pub struct Spreadsheet {
     plot_x_axis: String,
     plot_y_axis: String,
     plot_rows: String,
-    plot_type: PLOT,
+    plot_type: Plot,
     plot_save: String,
     plot_todo: bool,
 
@@ -98,7 +98,7 @@ impl Spreadsheet {
             save_dialog : false,
             save_path : String::new(),
             save_name : String::new(),
-            save_type : Save::RSK,
+            save_type : Save::Rsk,
             save_todo : None,
 
             // Load_dialog
@@ -112,7 +112,7 @@ impl Spreadsheet {
             plot_x_axis: String::new(),
             plot_y_axis: String::new(),
             plot_rows: String::new(),
-            plot_type: PLOT::Line,
+            plot_type: Plot::Line,
             plot_save: String::new(),
             plot_todo: false,
 
@@ -168,11 +168,11 @@ impl eframe::App for Spreadsheet {
             ui.horizontal(|ui| {
                 ui.label("\t\t\t\t\t\t\t");
 
-                if ui.add(egui::RadioButton::new(self.save_type==Save::RSK, RichText::new("RSK\t\t\t\t\t\t\t\t").font(FontId::proportional(20.0)))).on_hover_text("Save to a custom file extension that saves the state of program when you next load it").clicked() {
-                    self.save_type = Save::RSK;
+                if ui.add(egui::RadioButton::new(self.save_type==Save::Rsk, RichText::new("RSK\t\t\t\t\t\t\t\t").font(FontId::proportional(20.0)))).on_hover_text("Save to a custom file extension that saves the state of program when you next load it").clicked() {
+                    self.save_type = Save::Rsk;
                 }
-                if ui.add(egui::RadioButton::new(self.save_type==Save::CSV, RichText::new("CSV").font(FontId::proportional(20.0)))).on_hover_text("Save all visible values to a CSV but all the formula's are lost").clicked() {
-                    self.save_type = Save::CSV;
+                if ui.add(egui::RadioButton::new(self.save_type==Save::Csv, RichText::new("CSV").font(FontId::proportional(20.0)))).on_hover_text("Save all visible values to a CSV but all the formula's are lost").clicked() {
+                    self.save_type = Save::Csv;
                 }
 
             });
@@ -180,11 +180,11 @@ impl eframe::App for Spreadsheet {
                 ui.label("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t");
 
                 if ui.add_sized([100.0,30.0], Button::new(RichText::new("Save").font(FontId::proportional(20.0)))).clicked() {
-                    if self.save_type == Save::RSK {
+                    if self.save_type == Save::Rsk {
                         let path = format!("{}/{}.rsk", self.save_path,self.save_name);
                         self.save_todo = Some((self.save_type.clone(),path));
                         
-                    } else if self.save_type == Save::CSV {
+                    } else if self.save_type == Save::Csv {
                         let path = format!("{}/{}.csv", self.save_path,self.save_name);
                         self.save_todo = Some((self.save_type.clone(),path));
                         
@@ -202,10 +202,10 @@ impl eframe::App for Spreadsheet {
             self.save_todo = None;
             self.save_dialog = false;
             match save_type {
-                Save::RSK => {
+                Save::Rsk => {
                     ui::loadnsave::save_to_file(self, &path);
                 }
-                Save::CSV => {
+                Save::Csv => {
                     ui::loadnsave::save_1d_as_csv(&self.database,&self.err,self.len_h,self.len_v,&path).unwrap();
                 }
             }
@@ -296,11 +296,11 @@ impl eframe::App for Spreadsheet {
 
             ui.horizontal(|ui| {
             ui.label(RichText::new("Plot Type:\t\t").font(FontId::proportional(20.0)));
-            if ui.add(egui::RadioButton::new(self.plot_type == PLOT::Line, RichText::new("Line\t\t\t\t").font(FontId::proportional(20.0)))).clicked() {
-                self.plot_type = PLOT::Line;
+            if ui.add(egui::RadioButton::new(self.plot_type == Plot::Line, RichText::new("Line\t\t\t\t").font(FontId::proportional(20.0)))).clicked() {
+                self.plot_type = Plot::Line;
             }
-            if ui.add(egui::RadioButton::new(self.plot_type == PLOT::Scatter, RichText::new("Scatter").font(FontId::proportional(20.0)))).clicked() {
-                self.plot_type = PLOT::Scatter;
+            if ui.add(egui::RadioButton::new(self.plot_type == Plot::Scatter, RichText::new("Scatter").font(FontId::proportional(20.0)))).clicked() {
+                self.plot_type = Plot::Scatter;
             }
             });
 
@@ -332,7 +332,7 @@ impl eframe::App for Spreadsheet {
                         }
                     } }
                 
-                if self.plot_type == PLOT::Scatter {
+                if self.plot_type == Plot::Scatter {
                     utils::ui::plot::scatter_plot(&data,self.plot_save.as_str()).unwrap();
                 }else{
                     utils::ui::plot::line_plot(&data,self.plot_save.as_str()).unwrap();
@@ -341,10 +341,10 @@ impl eframe::App for Spreadsheet {
                 #[cfg(target_os = "windows")]
                 {
                     // Windows: Use "start" to open the image
-                    std::process::Command::new("cmd")
+                    let _ = std::process::Command::new("cmd")
                         .args(["/C", "start", &self.plot_save])
                         .spawn()
-                        .expect("Failed to open image");
+                        .expect("Failed to open image").wait();
                 }
                 #[cfg(target_os = "linux")]
                 {
@@ -444,7 +444,8 @@ impl eframe::App for Spreadsheet {
                 let mut y1=start/n_cols; let mut y2=end/n_cols;
                 let mut x1 = start%(n_cols); if x1==0{x1=n_cols;}
                 let mut x2 = end%(n_cols); if x2==0{x2=n_cols;}
-                if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+                if x1!=n_cols{y1+=1;}
+                if x2!=n_cols{y2+=1;}
                 let mut data = Vec::new();
                 for i in x1..x2+1{
                     for j in y1..y2+1{
@@ -468,7 +469,7 @@ impl eframe::App for Spreadsheet {
                 // (count, mean, std, min, p25, p50, p75, max)
             ];
 
-            for i in 0..labels.len() {
+            for (i,item) in labels.iter().enumerate() {
             egui::Grid::new(format!("describe_grid_{}", i))
                 .num_columns(2)
                 .show(ui, |ui| {
@@ -478,7 +479,7 @@ impl eframe::App for Spreadsheet {
                             .show(ui, |ui| {
                                 ui.add_sized([100.0, 35.0], 
 
-                                    egui::Label::new(RichText::new(labels[i].to_string()).font(FontId::proportional(20.0)))
+                                    egui::Label::new(RichText::new(item.to_string()).font(FontId::proportional(20.0)))
                                 );
                                 
                             });

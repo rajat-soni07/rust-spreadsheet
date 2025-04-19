@@ -23,7 +23,7 @@ pub fn get_label(a : i32)-> String{
     temp
 }
 
-pub fn display_grid(top_h: i32,top_v: i32,len_h: i32, len_v:i32, database: &Vec<i32>, err: &Vec<bool>){
+pub fn display_grid(top_h: i32,top_v: i32,len_h: i32, len_v:i32, database: &[i32], err: &[bool]){
     let i1 = top_h;
     let mut i2 = top_h + 9;
 

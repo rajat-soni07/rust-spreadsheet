@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-pub fn topo_sort(adj: &Vec<Vec<i32>>,cell:i32, indegree: &mut Vec<i32>) -> Vec<i32>{
+pub fn topo_sort(adj: &[Vec<i32>],cell:i32, indegree: &mut [i32]) -> Vec<i32>{
     //arguments- adj(vector of vector)-- adjacency list , indegree(vector) -- zero initialized vector 
     let mut q: VecDeque<i32> = VecDeque::new();
     q.push_back(cell); let mut is_cycle=0; let mut ct:i32=1;
@@ -18,7 +18,7 @@ pub fn topo_sort(adj: &Vec<Vec<i32>>,cell:i32, indegree: &mut Vec<i32>) -> Vec<i
 
     let mut res: Vec<i32> = vec![0; ct as usize];q.push_back(cell);
     if is_cycle==1{
-        res[0]=-1;
+        res[0]= -1;
         // we need to revert back changes in indegree
         while !q.is_empty(){
             let node=q.pop_front().unwrap();

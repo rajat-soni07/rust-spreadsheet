@@ -1,8 +1,9 @@
-pub fn min(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn min(c1: i32, c2:i32,data_base : &[i32] , n_cols: i32, err:&mut [bool],dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
-    if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+    if x1!=n_cols{y1+=1;}
+    if x2!=n_cols{y2+=1;}
 
     let mut ans = i32::MAX;
     let mut yn=false;
@@ -19,11 +20,14 @@ pub fn min(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
 
 }
 
-pub fn max(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn max(c1: i32, c2:i32,data_base : &[i32] , n_cols: i32, err:&mut [bool],dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
-    let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
-    let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
-    if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+    let mut x1 = c1%(n_cols);
+    if x1==0{x1=n_cols;}
+    let mut x2 = c2%(n_cols);
+    if x2==0{x2=n_cols;}
+    if x1!=n_cols{y1+=1;}
+    if x2!=n_cols{y2+=1;}
 
     let mut ans = i32::MIN;
     let mut yn=false;
@@ -40,11 +44,12 @@ pub fn max(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
 
 }
 
-pub fn sum(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn sum(c1: i32, c2:i32,data_base : &[i32] , n_cols: i32, err:&mut [bool],dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
-    if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+    if x1!=n_cols{y1+=1;}
+    if x2!=n_cols{y2+=1;}
 
     let mut ans = 0;
     let mut yn=false;
@@ -60,11 +65,12 @@ pub fn sum(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
 }
 
 
-pub fn avg(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn avg(c1: i32, c2:i32,data_base : &[i32] , n_cols: i32, err:&mut [bool],dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
-    if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+    if x1!=n_cols{y1+=1;}
+    if x2!=n_cols{y2+=1;}
 
     let mut ans = 0; let mut ct = 0;
     let mut yn=false;
@@ -80,11 +86,12 @@ pub fn avg(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<boo
 
 }
 
-pub fn stdev(c1: i32, c2:i32,data_base : &Vec<i32> , n_cols: i32, err:&mut Vec<bool>,dest:i32)->i32{
+pub fn stdev(c1: i32, c2:i32,data_base : &[i32] , n_cols: i32, err:&mut [bool],dest:i32)->i32{
     let mut y1=c1/n_cols; let mut y2=c2/n_cols;
     let mut x1 = c1%(n_cols); if x1==0{x1=n_cols;}
     let mut x2 = c2%(n_cols); if x2==0{x2=n_cols;}
-    if x1!=n_cols{y1+=1;} if x2!=n_cols{y2+=1;}
+    if x1!=n_cols{y1+=1;}
+    if x2!=n_cols{y2+=1;}
 
     let mut var = 0.0; let mut ct = 0;let mut ans=0;
     let mut yn=false;

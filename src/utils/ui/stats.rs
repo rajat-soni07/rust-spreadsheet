@@ -1,11 +1,11 @@
 use std::cmp;
 
-pub fn calculate_stats(data: &Vec<i32>) -> [f64; 8] {
+pub fn calculate_stats(data: &[i32]) -> [f64; 8] {
     if data.is_empty() {
         println!("No data provided.");
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
     }
-    let mut sorted = data.clone();
+    let mut sorted = data.to_owned();
     sorted.sort();
 
     let count = sorted.len();
