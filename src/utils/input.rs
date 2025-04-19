@@ -157,7 +157,7 @@ fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String
             return message;
         }
 
-        else if vec2.contains(&(output[2].as_str())){
+        else if vec2.contains(&(output[1].as_str())){
             let f=output[1].chars().nth(0).unwrap();
             let s=output[1].chars().nth(1).unwrap();
             if f=='C'{
@@ -335,9 +335,7 @@ pub fn help_input(input:&str) -> Vec<String>{
 
 pub fn input(input:&str,len_h:i32,len_v : i32) -> Vec<String>{
     let mut output=help_input(&input);
-    for i in 0..4{
-        // println!("{}",&output[i]);
-    }
+    
     let message = check_err(&input, &output, len_h, len_v);
     output.push(message);
 
