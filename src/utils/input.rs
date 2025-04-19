@@ -1,5 +1,34 @@
-use crate::cell_to_int;
+// use crate::cell_to_int;
 
+fn cell_to_int(a: &str) -> i32{
+    let mut col = 0;
+    let b = a.chars();
+    let mut part = 0;
+    for c in b.clone(){
+        if c.is_alphabetic() {
+            part += 1;
+        } else {
+            break;
+        }
+    }
+
+    for i in a[..part].chars() {
+        let diff = i as i32 - 'A' as i32 + 1;
+        
+        
+        if (1..=26).contains(&diff) {
+            col *= 26;
+            col += diff;
+        } else {
+            
+            break;
+        }
+    }
+    
+    let row: i32 = a[part..].parse().unwrap_or(0);
+
+    col * 1000 + row
+}
 
 
 fn is_arth(input:&str) -> bool {
@@ -87,6 +116,8 @@ fn is_valid_range(cell1:&str, cell2:&str) ->bool{
 
 fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String{
     let mut message = String::from("ok");
+    let vec1 = vec!["MEA","STD","SUM","MIN","MAX",];
+    let vec2 = vec!["VVA","CVA","VCA","CCA","VVS","CVS","VCS","CCS","VVM","CVM","VCM","CCM","VVD","CVD","VCD","CCD"];
     if output[1].len()!=3{
         message = String::from("Invalid Operation");return message;
     }
@@ -107,29 +138,58 @@ fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String
             message = String::from("Assigned Cell out of bounds");return message;
         }
 
-        if output[0]=="SLC"{
-            if is_valid_cell(&output[2], len_h, len_v){
-                message = String::from("Invalid Cell");return message;
-            }
-        else if output[0]=="EQC"{
+        if output[1]=="SLC"{
             if is_valid_cell(&output[2], len_h, len_v)==false{
                 message = String::from("Invalid Cell");return message;
             }
         }
-        else if output[0]=="SLV"{return message;}
-        else if output[0]=="EQV" {return message;}
-        else{
+        else if output[1]=="EQC"{
+            if is_valid_cell(&output[2], len_h, len_v)==false{
+                message = String::from("Invalid Cell");return message;
+            }
+        }
+        else if output[1]=="SLV"{return message;}
+        else if output[1]=="EQV" {return message;}
+        else if vec1.contains(&(output[1].as_str())){
+            if is_valid_range(&output[2], &output[3])==false{
+                message = String::from("Invalid Range");return message;
+            }
             return message;
+        }
+
+        else if vec2.contains(&(output[2].as_str())){
+            let f=output[1].chars().nth(0).unwrap();
+            let s=output[1].chars().nth(1).unwrap();
+            if f=='C'{
+                if is_valid_cell(&output[2], len_h, len_v)==false{
+                    message = String::from("Invalid Cell");return message;
+                }
+                return message;
+
+            }
+
+            if s=='C'{
+                if is_valid_cell(&output[3], len_h, len_v)==false{
+                    message = String::from("Invalid Cell");return message;
+                }
+                return message;
+            }
+            
+        }
+        else{
+            message = String::from("Invalid Operation");return message;
         }
 
 
 
 
-    }}
-
-
-return message
+    }
+    return message
 }
+
+
+
+
 
 
 pub fn help_input(input:&str) -> Vec<String>{
@@ -268,21 +328,26 @@ pub fn help_input(input:&str) -> Vec<String>{
     }
 
 
+
     return output;
 }
 
 
 pub fn input(input:&str,len_h:i32,len_v : i32) -> Vec<String>{
-    let mut output=help_input(input);
+    let mut output=help_input(&input);
+    for i in 0..4{
+        // println!("{}",&output[i]);
+    }
+    let message = check_err(&input, &output, len_h, len_v);
+    output.push(message);
 
-    output.push(String::from("ok"));
     return output;
 
 }
 // fn main(){
-//     let outp=is_integer(&String::from("1"));
+//     // let outp=is_valid_cell(&String::from("SUM"),100,100);
 //     // println!("{}",outp);
-//     let inp = String::from("A1 = 1");
+//     let inp = String::from("A1=SUM");
 //     let output = input(&inp,55,55);
 //     for i in 0..5{
 //         println!("{}",output[i]);
