@@ -30,7 +30,7 @@ pub struct Spreadsheet {
     cell_ref: (String,bool,bool),
     selected_cell: Option<i32>,
     hovered_cell: Option<i32>,
-    opers : Vec<crate::OPS>,
+    opers : Vec<crate::Ops>,
     indegree : Vec<i32>,
     sensi : Vec<Vec<i32>>,
     temp_txt : (String,bool),
@@ -76,12 +76,12 @@ pub struct Spreadsheet {
 
 
 impl Spreadsheet {
-    pub fn new(len_h: i32, len_v: i32, top_h: i32, top_v: i32, database: Vec<i32>, err: Vec<bool>,opers: Vec<crate::OPS>,indegree: Vec<i32>,sensi: Vec<Vec<i32>>) -> Self {
+    pub fn new(len_h: i32, len_v: i32, database: Vec<i32>, err: Vec<bool>,opers: Vec<crate::Ops>,indegree: Vec<i32>,sensi: Vec<Vec<i32>>) -> Self {
         Self {
             len_h,
             len_v,
-            top_h,
-            top_v,
+            top_h:1,
+            top_v:1,
             database,
             err,
             terminal: String::new(),

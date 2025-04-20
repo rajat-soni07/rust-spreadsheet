@@ -6,7 +6,7 @@ use std::error::Error;
 use genpdf::{elements, Document, Element};
 
 
-pub fn save_to_file(data: &mut ui::ui::Spreadsheet,path: &str){
+pub fn save_to_file(data: &mut ui::gui::Spreadsheet,path: &str){
 
     let json_data = serde_json::to_string(data).expect("Failed to serialize data");
 
@@ -17,9 +17,9 @@ pub fn save_to_file(data: &mut ui::ui::Spreadsheet,path: &str){
     println!("Data saved successfully to {}", path);
 }
 
-pub fn read_from_file(path: &str) -> ui::ui::Spreadsheet {
+pub fn read_from_file(path: &str) -> ui::gui::Spreadsheet {
     let file_content = std::fs::read_to_string(path).expect("Failed to read file");
-    let spreadsheet: ui::ui::Spreadsheet = serde_json::from_str(&file_content).expect("Failed to deserialize data");
+    let spreadsheet: ui::gui::Spreadsheet = serde_json::from_str(&file_content).expect("Failed to deserialize data");
 
     println!("Data loaded successfully from {}", path);
     spreadsheet

@@ -4,14 +4,14 @@ use std::io::Write;
 mod utils;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct OPS {
+struct Ops {
     opcpde: String,
     cell1: i32,
     cell2: i32,
 }
-impl Clone for OPS {
+impl Clone for Ops {
     fn clone(&self) -> Self {
-        OPS {
+        Ops {
             opcpde: self.opcpde.clone(),
             cell1: self.cell1,
             cell2: self.cell2,
@@ -66,7 +66,7 @@ fn cell_to_ind(a: &str, len_h: i32) -> i32{
     int_to_ind(cell_to_int(a),len_h)
 }
 
-fn calc(cell: i32, database: &mut Vec<i32>, opers: &Vec<OPS>, len_h: i32, err: &mut Vec<bool>) {
+fn calc(cell: i32, database: &mut [i32], opers: &[Ops], len_h: i32, err: &mut [bool]) {
     match opers[cell as usize].opcpde.as_str() {
         "CCA" => {
             let cell1 = opers[cell as usize].cell1 as usize;
@@ -195,17 +195,17 @@ fn calc(cell: i32, database: &mut Vec<i32>, opers: &Vec<OPS>, len_h: i32, err: &
     }
 }
 
-fn val_update(topo_arr : &Vec<i32>,database: &mut Vec<i32>,opers: &Vec<OPS>,len_h: i32,err: &mut Vec<bool>){
+fn val_update(topo_arr : &[i32],database: &mut [i32],opers: &[Ops],len_h: i32,err: &mut [bool]){
     for i in 1..=topo_arr[0]{
         calc(topo_arr[i as usize],database,opers,len_h,err)
     }
 }
 
-fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<Vec<i32>> , opers: &mut Vec<OPS>,len_h: i32,indegree : &mut Vec<i32>, err: &mut Vec<bool>)->i32{
+fn cell_update(inp_arr: &[String], database: &mut [i32], sensi: &mut [Vec<i32>] , opers: &mut [Ops],len_h: i32,indegree : &mut [i32], err: &mut [bool])->i32{
     let target = cell_to_ind(&inp_arr[0],len_h);
     let target = target as usize;
     // Storing temporary value of opers in case a cycle is present
-    let rev = OPS{
+    let rev = Ops{
         opcpde: opers[target].opcpde.clone(),
         .. opers[target]
     };
@@ -474,7 +474,7 @@ fn cell_update(inp_arr: &Vec<String>, database: &mut Vec<i32>, sensi: &mut Vec<V
         }
 
         // Restoring back previous ops in case of cycle
-        opers[target] = OPS{
+        opers[target] = Ops{
             opcpde: rev.opcpde.clone(),
             ..rev
         };
@@ -494,7 +494,7 @@ fn non_ui(len_h: i32, len_v: i32) {
 
     let mut database = vec![0; (len_h * len_v + 1) as usize];
     let mut err = vec![false; (len_h * len_v + 1) as usize];
-    let mut opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
+    let mut opers = vec![Ops{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
     let mut indegree = vec![0; (len_h * len_v + 1) as usize];
     let mut sensi = vec![Vec::<i32>::new();(len_h * len_v + 1) as usize];
 
@@ -575,11 +575,9 @@ fn non_ui(len_h: i32, len_v: i32) {
 fn ui(len_h: i32,len_v: i32) -> eframe::Result {
     let database = vec![0; (len_h * len_v + 1) as usize];
     let err = vec![false; (len_h * len_v + 1) as usize];
-    let opers = vec![OPS{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
+    let opers = vec![Ops{opcpde: String::new(),cell1: -1, cell2 :-1}; (len_h * len_v + 1) as usize];
     let indegree = vec![0; (len_h * len_v + 1) as usize];
     let sensi = vec![Vec::<i32>::new();(len_h * len_v + 1) as usize];
-    let top_h = 1;
-    let top_v = 1;
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([1200.0, 800.0]).with_resizable(false).with_maximize_button(false),
         
@@ -591,7 +589,7 @@ fn ui(len_h: i32,len_v: i32) -> eframe::Result {
         
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::new(utils::ui::ui::Spreadsheet::new(len_h, len_v, top_h, top_v, database, err, opers, indegree, sensi)))
+            Ok(Box::new(utils::ui::gui::Spreadsheet::new(len_h, len_v, database, err, opers, indegree, sensi)))
         }),
     )
 }

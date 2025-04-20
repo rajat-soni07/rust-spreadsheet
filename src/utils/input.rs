@@ -37,7 +37,7 @@ fn is_arth(input:&str) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
 
 fn is_scroll(input:&str) ->bool{
@@ -45,7 +45,7 @@ fn is_scroll(input:&str) ->bool{
     for c in input.chars(){
         if c=='='{return false;}
     }
-    return true;
+    true
 }
 
 fn is_integer(input:&str)->bool{
@@ -57,11 +57,11 @@ fn is_integer(input:&str)->bool{
             first=0;
         }
         
-        if c<'0' || c>'9'{
+        if !c.is_ascii_digit(){
             return false;
         }
     }
-    return true;
+    true
 }
 
 
@@ -75,49 +75,44 @@ fn is_valid_cell(cell:&str, len_h:i32,len_v:i32) ->bool{
     for i in cell.chars(){
         if first==1{
             first=0;
-            if i<'A' || i>'Z'{
+            if !i.is_ascii_uppercase(){
                 return false;
             }
             continue;
         }
 
         if state==0{
-            if i<'A' || i>'Z'{
+            if !i.is_ascii_uppercase(){
                 state=1;
             }
         }
-        else{
-            if i<'0' || i>'9'{
+        else if !i.is_ascii_digit(){
                 return false;
             }
-        }
+        
     }
     if state==0{return false;}
-    let k=cell_to_int(&cell);
+    let k=cell_to_int(cell);
     let r=k%1000;let c=k/1000;
     if r<=len_v && c<=len_h{
         return true;
     }
-    return false;
+    false
 
 }
 
 fn is_valid_range(cell1:&str, cell2:&str) ->bool{
     let k1=cell_to_int(cell1); let r1=k1%1000; let c1=k1/1000;
     let k2=cell_to_int(cell2); let r2=k2%1000; let c2=k2/1000;
-    if r1>r2 || c1>c2{
-        return false;
-    }
-    else{
-        return true;
-    }
+    
+    !(r1>r2 || c1>c2)
 }
 
 
-fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String{
+fn check_err(input:&str , output: &[String] ,len_h:i32,len_v : i32) -> String{
     let mut message = String::from("ok");
-    let vec1 = vec!["MEA","STD","SUM","MIN","MAX",];
-    let vec2 = vec!["VVA","CVA","VCA","CCA","VVS","CVS","VCS","CCS","VVM","CVM","VCM","CCM","VVD","CVD","VCD","CCD"];
+    let vec1 = ["MEA","STD","SUM","MIN","MAX",];
+    let vec2 = ["VVA","CVA","VCA","CCA","VVS","CVS","VCS","CCS","VVM","CVM","VCM","CCM","VVD","CVD","VCD","CCD"];
     if output[1].len()!=3{
         message = String::from("Invalid Operation");return message;
     }
@@ -134,34 +129,29 @@ fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String
         }
     }
     else{
-        if is_valid_cell(&output[0], len_h, len_v)==false{
+        if !is_valid_cell(&output[0], len_h, len_v){
             message = String::from("Assigned Cell out of bounds");return message;
         }
 
-        if output[1]=="SLC"{
-            if is_valid_cell(&output[2], len_h, len_v)==false{
+        if output[1]=="SLC" || output[1]=="EQC"{
+            if !is_valid_cell(&output[2], len_h, len_v){
                 message = String::from("Invalid Cell");return message;
             }
         }
-        else if output[1]=="EQC"{
-            if is_valid_cell(&output[2], len_h, len_v)==false{
-                message = String::from("Invalid Cell");return message;
-            }
-        }
-        else if output[1]=="SLV"{return message;}
-        else if output[1]=="EQV" {return message;}
+        else if output[1]=="SLV" || output[1]=="EQV" {return message;}
+
         else if vec1.contains(&(output[1].as_str())){
-            if is_valid_range(&output[2], &output[3])==false{
+            if !is_valid_range(&output[2], &output[3]){
                 message = String::from("Invalid Range");return message;
             }
             return message;
         }
 
         else if vec2.contains(&(output[1].as_str())){
-            let f=output[1].chars().nth(0).unwrap();
+            let f=output[1].chars().next().unwrap();
             let s=output[1].chars().nth(1).unwrap();
             if f=='C'{
-                if is_valid_cell(&output[2], len_h, len_v)==false{
+                if !is_valid_cell(&output[2], len_h, len_v){
                     message = String::from("Invalid Cell");return message;
                 }
                 return message;
@@ -169,7 +159,7 @@ fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String
             }
 
             if s=='C'{
-                if is_valid_cell(&output[3], len_h, len_v)==false{
+                if !is_valid_cell(&output[3], len_h, len_v){
                     message = String::from("Invalid Cell");return message;
                 }
                 return message;
@@ -184,7 +174,7 @@ fn check_err(input:&str , output: &Vec<String> ,len_h:i32,len_v : i32) -> String
 
 
     }
-    return message
+    message
 }
 
 
@@ -196,7 +186,7 @@ pub fn help_input(input:&str) -> Vec<String>{
     let mut output= vec![String::new(); 4];
     let input_arr: Vec<char> = input.chars().collect();
     let n = input_arr.len();
-    if is_scroll(&input){
+    if is_scroll(input){
         let mut i=0;
         output[1]=String::from("SRL");
         while i<n && input_arr[i]!=' '{
@@ -218,7 +208,7 @@ pub fn help_input(input:&str) -> Vec<String>{
         i+=1;
     }
 
-    if is_arth(&input) {
+    if is_arth(input) {
         i+=1;
         while i<n && input_arr[i]==' '{i+=1;}
         output[2].push(input_arr[i]);
@@ -290,7 +280,7 @@ pub fn help_input(input:&str) -> Vec<String>{
             i+=1;
         }
         i+=1;
-        if output[1]==String::from("SLEEP"){
+        if output[1]==*"SLEEP"{
             output[1]=String::from("SL");
             while i<n && input_arr[i]!=')'{
                 output[2].push(input_arr[i]);
@@ -312,13 +302,13 @@ pub fn help_input(input:&str) -> Vec<String>{
 
     }
 
-    if output[1]==String::from("STDEV"){
+    if output[1]==*"STDEV"{
         output[1]=String::from("STD");
     }
-    else if output[1]==String::from("AVG"){
+    else if output[1]==*"AVG"{
         output[1]=String::from("MEA");
     }
-    else if output[1]==String::from("SL"){
+    else if output[1]==*"SL"{
         if is_integer(&output[2]){
             output[1].push('V');
         }
@@ -329,17 +319,17 @@ pub fn help_input(input:&str) -> Vec<String>{
 
 
 
-    return output;
+    output
 }
 
 
 pub fn input(input:&str,len_h:i32,len_v : i32) -> Vec<String>{
-    let mut output=help_input(&input);
+    let mut output=help_input(input);
     
-    let message = check_err(&input, &output, len_h, len_v);
+    let message = check_err(input, &output, len_h, len_v);
     output.push(message);
 
-    return output;
+    output
 
 }
 // fn main(){
