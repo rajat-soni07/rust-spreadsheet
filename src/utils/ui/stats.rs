@@ -23,10 +23,14 @@ pub fn calculate_stats(data: &[i32]) -> [f64; 8] {
     let p75 = percentile(0.75);
 
     let mean = data.iter().sum::<i32>() as f64 / count as f64;
-    let variance = data.iter().map(|&x| {
-        let diff = x as f64 - mean;
-        diff * diff
-    }).sum::<f64>() / count as f64;
+    let variance = data
+        .iter()
+        .map(|&x| {
+            let diff = x as f64 - mean;
+            diff * diff
+        })
+        .sum::<f64>()
+        / count as f64;
     let std = variance.sqrt();
 
     [
@@ -40,4 +44,3 @@ pub fn calculate_stats(data: &[i32]) -> [f64; 8] {
         max as f64,
     ]
 }
-
