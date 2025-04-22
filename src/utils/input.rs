@@ -65,7 +65,7 @@ fn is_integer(input: &str) -> bool {
     true
 }
 
-fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
+pub fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
     // input no of rows,no of cols
     let n = cell.len();
     if n < 2 {
@@ -96,7 +96,7 @@ fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
     let k = cell_to_int(cell);
     let r = k % 1000;
     let c = k / 1000;
-    if r <= len_v && c <= len_h {
+    if r <= len_v && c <= len_h && r > 0 && c > 0 {
         return true;
     }
     false
@@ -110,7 +110,8 @@ fn is_valid_range(cell1: &str, cell2: &str, len_h: i32, len_v: i32) -> bool {
     let r2 = k2 % 1000;
     let c2 = k2 / 1000;
 
-    !(r1 > r2 || c1 > c2) && (r1 <= len_v && c1 <= len_h) && (r2 <= len_v && c2 <= len_h)
+    !(r1 > r2 || c1 > c2) && (r1 <= len_v && c1 <= len_h) && (r2 <= len_v && c2 <= len_h) &&
+        (r1 > 0 && c1 > 0) && (r2 > 0 && c2 > 0)
 }
 
 fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {

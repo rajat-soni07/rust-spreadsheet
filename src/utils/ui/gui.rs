@@ -1095,11 +1095,21 @@ impl eframe::App for Spreadsheet {
                             formullaaaa = parts[1].trim().to_string();
                         }
                     }
+                    if !crate::utils::input::is_valid_cell(cell.as_str(), self.len_h, self.len_v) {
+                        Notification::new()
+                            .summary("Invalid Cell")
+                            .body("The cell reference is invalid. Please check your input.")
+                            .show()
+                            .unwrap();
+                    }else{
+
+                    
                     let ind = crate::cell_to_ind(cell.as_str(), self.len_h);
                     let tmp_formuala = self.formula[ind as usize].clone();
                     self.formula[ind as usize] = formullaaaa;
                     let out = utils::input::input(&self.terminal, self.len_h, self.len_v);
                     let status = out[4].clone();
+                    println!("{:?}", out);
                     if status == "ok" {
                         if out[1] == "SRL" {
                             let t = crate::cell_to_ind(out[0].as_str(), self.len_h);
@@ -1137,6 +1147,7 @@ impl eframe::App for Spreadsheet {
                             .unwrap();
                         self.formula[ind as usize] = tmp_formuala;
                     }
+                }
                     self.terminal = String::new();
                     term.request_focus();
                 };
