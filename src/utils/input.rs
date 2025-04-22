@@ -102,7 +102,7 @@ fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
     false
 }
 
-fn is_valid_range(cell1: &str, cell2: &str) -> bool {
+fn is_valid_range(cell1: &str, cell2: &str, len_h: i32, len_v: i32) -> bool {
     let k1 = cell_to_int(cell1);
     let r1 = k1 % 1000;
     let c1 = k1 / 1000;
@@ -110,7 +110,7 @@ fn is_valid_range(cell1: &str, cell2: &str) -> bool {
     let r2 = k2 % 1000;
     let c2 = k2 / 1000;
 
-    !(r1 > r2 || c1 > c2)
+    !(r1 > r2 || c1 > c2) && (r1 <= len_v && c1 <= len_h) && (r2 <= len_v && c2 <= len_h)
 }
 
 fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
@@ -134,6 +134,8 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
         }
         if temp != "scroll_to" {
             message = String::from("Invalid Operation");
+        } else if !is_valid_cell(&output[0], len_h, len_v) {
+            message = String::from("Scroll Cell out of bounds");
         }
     } else {
         if !is_valid_cell(&output[0], len_h, len_v) {
@@ -149,7 +151,7 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
         } else if output[1] == "SLV" || output[1] == "EQV" {
             return message;
         } else if vec1.contains(&(output[1].as_str())) {
-            if !is_valid_range(&output[2], &output[3]) {
+            if !is_valid_range(&output[2], &output[3], len_h, len_v) {
                 message = String::from("Invalid Range");
                 return message;
             }

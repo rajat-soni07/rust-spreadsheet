@@ -4,6 +4,10 @@ use eframe::egui;
 use egui::{Button, Color32, FontId, RichText};
 use notify_rust::Notification;
 
+fn min(a: i32, b: i32) -> i32 {
+    if a < b { a } else { b }
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq, Clone)]
 enum Save {
     Rsk,
@@ -69,6 +73,8 @@ pub struct Spreadsheet {
 
     // About dialog
     about_dialog: bool,
+
+    initialized_time: i64,
 }
 
 impl Spreadsheet {
@@ -133,6 +139,8 @@ impl Spreadsheet {
 
             // About dialog
             about_dialog: false,
+
+            initialized_time: chrono::Local::now().timestamp(),
         }
     }
 }
@@ -263,8 +271,9 @@ impl eframe::App for Spreadsheet {
             self.load_dialog = false;
             self.load_todo = false;
             let path = self.load_path.clone();
+            let tm = self.initialized_time;
             *self = ui::loadnsave::read_from_file(self.load_path.as_str());
-
+            self.initialized_time = tm;
             Notification::new()
                 .summary("File Loaded")
                 .body(format!("File Loaded from {}", path).as_str())
@@ -621,7 +630,7 @@ impl eframe::App for Spreadsheet {
                 ui.add_space(10.0);
                 ui.label(RichText::new("Developed by:").font(FontId::proportional(20.0)));
                 ui.label(RichText::new("Rajat Soni: 2023CS10229").font(FontId::proportional(18.0)));
-                ui.label(RichText::new("Krish Bhiamni: 2023CS10712").font(FontId::proportional(18.0)));
+                ui.label(RichText::new("Krish Bhimani: 2023CS10712").font(FontId::proportional(18.0)));
                 ui.label(RichText::new("Priyanshu Gaurav").font(FontId::proportional(18.0)));
                 ui.label(RichText::new("IIT Delhi, Semester 4, COP290").font(FontId::proportional(18.0)));
                 ui.add_space(10.0);
@@ -632,21 +641,22 @@ impl eframe::App for Spreadsheet {
                 // ui.label(RichText::new("Email: rustspreadsheet@iitd.ac.in").font(FontId::proportional(18.0)));
             });
         egui::CentralPanel::default().show(ctx, |ui| {
-            // if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)){
-            //     self.top_v-=1;
-            // }
+            let scroll_delta = ctx.input(|i| i.raw_scroll_delta);
+            if scroll_delta.y > 0.0 && self.top_v > 1 {
+                self.top_v-=1;
+            }
 
-            // if ui.input(|i| i.key_pressed(egui::Key::ArrowLeft)){
-            //     self.top_h-=1;
-            // }
+            if scroll_delta.x >0.0 && self.top_h > 1{
+                self.top_h-=1;
+            }
 
-            // if ui.input(|i| i.key_pressed(egui::Key::ArrowRight)){
-            //     self.top_h+=1;
-            // }
+            if scroll_delta.x <0.0 && self.top_h <= self.len_h-10{
+                self.top_h+=1;
+            }
 
-            // if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)){
-            //     self.top_v+=1;
-            // }
+            if scroll_delta.y <0.0 && self.top_v <= self.len_v-10{
+                self.top_v+=1;
+            }
 
             ui.add_space(10.0);
             // Header
@@ -834,6 +844,13 @@ impl eframe::App for Spreadsheet {
                             self.selected_cell = Some(t);
                             self.temp_txt.1 = true;
                         }
+                        else{
+                            Notification::new()
+                                .summary("Invalid Cell")
+                                .body("The cell reference is invalid. Please check your input.")
+                                .show()
+                                .unwrap();
+                        }
                         self.cell_ref.1 = false;
                     };
                 } else {
@@ -992,6 +1009,11 @@ impl eframe::App for Spreadsheet {
                                         if self.temp_txt.0.starts_with('=') {
                                             self.temp_txt.0.remove(0);
                                         }
+
+                                        if self.temp_txt.0.is_empty() {
+                                            self.temp_txt.0 = "0".to_string();
+                                        }
+                                        let tmp_formuala = self.formula[ind as usize].clone();
                                         self.formula[ind as usize] = self.temp_txt.0.clone();
                                         self.temp_txt.0 = format!(
                                             "{}{}={}",
@@ -1007,6 +1029,7 @@ impl eframe::App for Spreadsheet {
                                             self.len_v,
                                         );
                                         let status = out[4].clone();
+                                        // println!("{:?}", out);
                                         if status == "ok" && out[1] != "SRL" {
                                             let suc = crate::cell_update(
                                                 &out,
@@ -1018,8 +1041,20 @@ impl eframe::App for Spreadsheet {
                                                 &mut self.err,
                                             );
                                             if suc == 0 {
-                                                // Write code for error here
+                                                Notification::new()
+                                                    .summary("Cycle Detected")
+                                                    .body("Cycle detected in the graph. Please check your formulas. The change has been reverted")
+                                                    .show()
+                                                    .unwrap();
+                                                self.formula[ind as usize] = tmp_formuala;
                                             }
+                                        }else{
+                                            Notification::new()
+                                                .summary(&status)
+                                                .body("Invalid formula. Please check your input.")
+                                                .show()
+                                                .unwrap();
+                                            self.formula[ind as usize] = tmp_formuala;
                                         }
                                         self.temp_txt.0 = String::new();
                                     }
@@ -1060,8 +1095,9 @@ impl eframe::App for Spreadsheet {
                             formullaaaa = parts[1].trim().to_string();
                         }
                     }
-                    self.formula[crate::cell_to_ind(cell.as_str(), self.len_h) as usize] =
-                        formullaaaa;
+                    let ind = crate::cell_to_ind(cell.as_str(), self.len_h);
+                    let tmp_formuala = self.formula[ind as usize].clone();
+                    self.formula[ind as usize] = formullaaaa;
                     let out = utils::input::input(&self.terminal, self.len_h, self.len_v);
                     let status = out[4].clone();
                     if status == "ok" {
@@ -1085,9 +1121,21 @@ impl eframe::App for Spreadsheet {
                                 &mut self.err,
                             );
                             if suc == 0 {
-                                // status = "cycle_detected".to_string();
+                                Notification::new()
+                                    .summary("Cycle Detected")
+                                    .body("Cycle detected in the graph. Please check your formulas. The change has been reverted")
+                                    .show()
+                                    .unwrap();
+                                self.formula[ind as usize] = tmp_formuala;
                             }
                         }
+                    }else{
+                        Notification::new()
+                            .summary(&status)
+                            .body("Invalid formula. Please check your input.")
+                            .show()
+                            .unwrap();
+                        self.formula[ind as usize] = tmp_formuala;
                     }
                     self.terminal = String::new();
                     term.request_focus();
@@ -1099,7 +1147,7 @@ impl eframe::App for Spreadsheet {
                     )
                     .clicked()
                 {
-                    self.top_h -= 10;
+                    self.top_h = crate::max(self.top_h - 10, 1);
                 };
                 if ui
                     .add_sized(
@@ -1108,12 +1156,21 @@ impl eframe::App for Spreadsheet {
                     )
                     .clicked()
                 {
-                    self.top_v += 10;
+                    self.top_v = min(self.top_v + 10, self.len_v - 9);
                 };
+
+                let curr_time = chrono::Local::now().timestamp();
+                let time = (curr_time - self.initialized_time) as i32;
+                let hours = time / 3600;
+                let minutes = (time % 3600) / 60;
+                let seconds = time % 60;
+                let formatted_time = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+
                 ui.add_sized(
                     [120.0, 30.0],
-                    egui::Label::new(RichText::new("00:00").font(FontId::proportional(20.0))),
+                    egui::Label::new(RichText::new(formatted_time).font(FontId::proportional(20.0))),
                 );
+
                 if ui
                     .add_sized(
                         [50.0, 30.0],
@@ -1121,7 +1178,7 @@ impl eframe::App for Spreadsheet {
                     )
                     .clicked()
                 {
-                    self.top_v -= 10;
+                    self.top_v = crate::max(self.top_v - 10, 1);
                 };
                 if ui
                     .add_sized(
@@ -1130,7 +1187,7 @@ impl eframe::App for Spreadsheet {
                     )
                     .clicked()
                 {
-                    self.top_h += 10;
+                    self.top_h = min(self.top_h + 10, self.len_h - 9);
                 };
             });
         });
