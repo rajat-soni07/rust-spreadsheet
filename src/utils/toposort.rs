@@ -10,7 +10,6 @@ use std::collections::VecDeque;
 /// * `indegree` - A mutable reference to a vector representing the indegree of each node.(zero initialized vector)
 /// # Returns
 /// A vector containing the topological order of the nodes. If a cycle is detected, the first element will be -1 else the first element will be the count of nodes in the connected component of cell.
-
 pub fn topo_sort(adj: &[Vec<i32>], cell: i32, indegree: &mut [i32]) -> Vec<i32> {
     let mut q: VecDeque<i32> = VecDeque::new(); // queue initialization
     q.push_back(cell);

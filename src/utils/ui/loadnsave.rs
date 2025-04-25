@@ -18,7 +18,7 @@ use std::io::Write;
 /// Saves spreadsheet data to a file in the native format (.rsk).
 ///
 /// This function serializes the entire spreadsheet state to JSON and writes it to the specified path.
-/// The native format preserves all application state including formulas, cell relationships, 
+/// The native format preserves all application state including formulas, cell relationships,
 /// and UI settings.
 ///
 /// # Arguments
@@ -96,7 +96,7 @@ pub fn save_1d_as_csv(
 /// Exports spreadsheet data to a PDF file.
 ///
 /// This function creates a formatted PDF document representing the spreadsheet content.
-/// The PDF includes proper pagination for large spreadsheets, with each page showing up to 
+/// The PDF includes proper pagination for large spreadsheets, with each page showing up to
 /// 10x10 cells. Cells with errors are marked with "ERR".
 ///
 /// # Arguments

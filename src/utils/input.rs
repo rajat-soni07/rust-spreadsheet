@@ -2,10 +2,10 @@
 use crate::cell_to_int;
 
 /// Checks if the input is of arithmetic type.
-/// 
+///
 /// # Arguments
 /// * `input` - A string slice containing the input to check
-/// 
+///
 /// # Returns
 /// * `bool` - true if input is arithmetic (does not contain parentheses), false otherwise
 fn is_arth(input: &str) -> bool {
@@ -18,10 +18,10 @@ fn is_arth(input: &str) -> bool {
 }
 
 /// Checks if the input is a scroll operation.
-/// 
+///
 /// # Arguments
 /// * `input` - A string slice containing the input to check
-/// 
+///
 /// # Returns
 /// * `bool` - true if input is a scroll operation (no '=' character), false otherwise
 fn is_scroll(input: &str) -> bool {
@@ -35,10 +35,10 @@ fn is_scroll(input: &str) -> bool {
 }
 
 /// Checks if the input string represents an integer.
-/// 
+///
 /// # Arguments
 /// * `input` - A string slice containing the input to check
-/// 
+///
 /// # Returns
 /// * `bool` - true if input is an integer value, false otherwise
 fn is_integer(input: &str) -> bool {
@@ -59,12 +59,12 @@ fn is_integer(input: &str) -> bool {
 }
 
 /// Validates if a cell reference is within bounds.
-/// 
+///
 /// # Arguments
 /// * `cell` - A string slice containing the cell reference (e.g., "A1")
 /// * `len_h` - An i32 representing the horizontal boundary (columns)
 /// * `len_v` - An i32 representing the vertical boundary (rows)
-/// 
+///
 /// # Returns
 /// * `bool` - true if the cell is valid and within bounds, false otherwise
 pub fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
@@ -105,13 +105,13 @@ pub fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
 }
 
 /// Validates if a cell range is valid and within bounds.
-/// 
+///
 /// # Arguments
 /// * `cell1` - A string slice containing the first cell reference
 /// * `cell2` - A string slice containing the second cell reference
 /// * `len_h` - An i32 representing the horizontal boundary (columns)
 /// * `len_v` - An i32 representing the vertical boundary (rows)
-/// 
+///
 /// # Returns
 /// * `bool` - true if the range is valid and within bounds, false otherwise
 fn is_valid_range(cell1: &str, cell2: &str, len_h: i32, len_v: i32) -> bool {
@@ -122,18 +122,21 @@ fn is_valid_range(cell1: &str, cell2: &str, len_h: i32, len_v: i32) -> bool {
     let r2 = k2 % 1000;
     let c2 = k2 / 1000;
 
-    !(r1 > r2 || c1 > c2) && (r1 <= len_v && c1 <= len_h) && (r2 <= len_v && c2 <= len_h) &&
-        (r1 > 0 && c1 > 0) && (r2 > 0 && c2 > 0)
+    !(r1 > r2 || c1 > c2)
+        && (r1 <= len_v && c1 <= len_h)
+        && (r2 <= len_v && c2 <= len_h)
+        && (r1 > 0 && c1 > 0)
+        && (r2 > 0 && c2 > 0)
 }
 
 /// Checks for errors in the parsed input based on operation type and cell references.
-/// 
+///
 /// # Arguments
 /// * `input` - A string slice containing the original input
 /// * `output` - A slice of Strings containing the parsed components
 /// * `len_h` - An i32 representing the horizontal boundary (columns)
 /// * `len_v` - An i32 representing the vertical boundary (rows)
-/// 
+///
 /// # Returns
 /// * `String` - "ok" if no errors, otherwise a relevant error message
 fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
@@ -187,7 +190,6 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
                     message = String::from("Invalid Cell");
                     return message;
                 }
-                
             }
 
             if s == 'C' {
@@ -196,8 +198,8 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
                     return message;
                 }
                 return message;
-            }else{
-                return  message;
+            } else {
+                return message;
             }
         } else {
             message = String::from("Invalid Operation");
@@ -208,10 +210,10 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
 }
 
 /// Parses input into components without validation.
-/// 
+///
 /// # OPCODES
 /// Strings of length 3 to determine type of operation:
-/// 
+///
 /// ## Arithmetic Operations
 /// Format: Operand1Type Operand2Type OperationType
 /// - Operand types:
@@ -226,26 +228,26 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
 ///   - "VVA": Value + Value
 ///   - "CCA": Cell + Cell
 ///   - "CVD": Cell / Value
-/// 
+///
 /// ## Assignment Operations
 /// - "EQV": Assign value to cell (e.g., A1=5)
 /// - "EQC": Assign cell value to another cell (e.g., A1=B2)
-/// 
+///
 /// ## Function Operations
 /// - "MEA": Average function (AVG)
 /// - "STD": Standard deviation function (STDEV)
 /// - "SUM": Sum function
 /// - "MIN": Minimum value function
 /// - "MAX": Maximum value function
-/// 
+///
 /// ## Special Operations
 /// - "SRL": Scroll to a specific cell
 /// - "SLV": Sleep for a value (time in ms)
 /// - "SLC": Sleep for a cell value (time in ms)
-/// 
+///
 /// # Arguments
 /// * `input` - A string slice containing the input to parse
-/// 
+///
 /// # Returns
 /// * `Vec<String>` - Vector containing the parsed components:
 ///   - `output[0]` - Destination Cell
@@ -392,12 +394,12 @@ pub fn help_input(input: &str) -> Vec<String> {
 }
 
 /// Parses and validates input for spreadsheet operations.
-/// 
+///
 /// # Arguments
 /// * `input` - A string slice containing the input to parse and validate
 /// * `len_h` - An i32 representing the horizontal boundary (columns)
 /// * `len_v` - An i32 representing the vertical boundary (rows)
-/// 
+///
 /// # Returns
 /// * `Vec<String>` - Vector containing the parsed components(output of `help_input` function) and validation message (output of `check_err` function).
 pub fn input(input: &str, len_h: i32, len_v: i32) -> Vec<String> {
@@ -589,14 +591,14 @@ mod tests {
         assert_eq!(result[2], "B1");
         assert_eq!(result[3], "C1");
         assert_eq!(result[4], "ok");
-        
+
         let result = input("A1=5", 26, 100);
         assert_eq!(result[0], "A1");
         assert_eq!(result[1], "EQV");
         assert_eq!(result[2], "5");
         assert_eq!(result[4], "ok");
     }
-    
+
     #[test]
     fn test_min_max_functions() {
         let result = input("A1=MIN(B1:C5)", 26, 100);
@@ -605,7 +607,7 @@ mod tests {
         assert_eq!(result[2], "B1");
         assert_eq!(result[3], "C5");
         assert_eq!(result[4], "ok");
-        
+
         let result = input("A1=MAX(B1:C5)", 26, 100);
         assert_eq!(result[0], "A1");
         assert_eq!(result[1], "MAX");
@@ -613,16 +615,16 @@ mod tests {
         assert_eq!(result[3], "C5");
         assert_eq!(result[4], "ok");
     }
-    
+
     #[test]
     fn test_invalid_operations() {
         let result = input("A1=INVALID(B1:C5)", 26, 100);
         assert_eq!(result[4], "Invalid Operation");
-        
+
         let result = input("scroll_invalid A1", 26, 100);
         assert_eq!(result[4], "Invalid Operation");
     }
-    
+
     #[test]
     fn test_division_and_multiplication() {
         let result = input("A1=B1/C1", 26, 100);
@@ -631,7 +633,7 @@ mod tests {
         assert_eq!(result[2], "B1");
         assert_eq!(result[3], "C1");
         assert_eq!(result[4], "ok");
-        
+
         let result = input("A1=B1*5", 26, 100);
         assert_eq!(result[0], "A1");
         assert_eq!(result[1], "CVM");
@@ -639,15 +641,15 @@ mod tests {
         assert_eq!(result[3], "5");
         assert_eq!(result[4], "ok");
     }
-    
+
     #[test]
     fn test_cell_out_of_bounds() {
         let result = input("scroll_to Z101", 26, 100);
         assert_eq!(result[4], "Scroll Cell out of bounds");
-        
+
         let result = input("A1=Z101", 26, 100);
         assert_eq!(result[4], "Invalid Cell");
-        
+
         let result = input("A1=B1+Z101", 26, 100);
         assert_eq!(result[4], "Invalid Cell");
     }

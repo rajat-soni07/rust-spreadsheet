@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 /// Calculates appropriate axis ranges for a data series.
 ///
-/// This function automatically determines suitable x and y axis ranges based on the 
+/// This function automatically determines suitable x and y axis ranges based on the
 /// provided data points, adding margins around the data for better visualization.
 ///
 /// # Arguments
@@ -49,7 +49,7 @@ fn auto_range(data: &[(f64, f64)]) -> (std::ops::Range<f64>, std::ops::Range<f64
 
 /// Creates a scatter plot from a set of data points and saves it to a file.
 ///
-/// This function generates a scatter plot where each data point is rendered as 
+/// This function generates a scatter plot where each data point is rendered as
 /// a separate circle. It automatically scales the axes to fit the data.
 ///
 /// # Arguments

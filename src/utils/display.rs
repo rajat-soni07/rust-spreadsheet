@@ -100,9 +100,6 @@ pub fn display_grid(
     }
 }
 
-
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,7 +109,7 @@ mod tests {
         assert_eq!(shift_char('A', 0), 'A');
         assert_eq!(shift_char('A', 1), 'B');
         assert_eq!(shift_char('A', 25), 'Z');
-        
+
         // Edge cases
         assert_eq!(shift_char('Z', 1), '['); // ASCII value after 'Z'
         assert_eq!(shift_char('A', -1), '@'); // ASCII value before 'A'
@@ -136,7 +133,6 @@ mod tests {
         assert_eq!(get_label(702), "ZZ");
     }
 
-
     #[test]
     fn test_get_label_triple_letter() {
         // Triple letter cases (703-18277)
@@ -154,28 +150,18 @@ mod tests {
         assert_eq!(get_label(27), "AA");
         assert_eq!(get_label(702), "ZZ");
         assert_eq!(get_label(703), "AAA");
-        
     }
 
-    
-        
     #[test]
     fn test_display_grid() {
-        
         // Create a small test dataset
         let len_h = 3;
         let len_v = 3;
         let database = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         let mut err = vec![false; 10];
         err[4] = true; // Mark element at position (2,2) as error
-        
+
         display_grid(1, 1, len_h, len_v, &database, &err);
         assert!(true); // If no panic occurs 
-
     }
-    
-
-
-
-
 }

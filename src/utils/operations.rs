@@ -53,10 +53,9 @@ pub fn min(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
 /// * `n_cols` - The number of cells in the data array.
 /// * `err` - A mutable reference to a boolean array for error checking.
 /// * `dest` - The destination index in the error array to store the error status.
-/// # Returns 
+/// # Returns
 /// The maximum value found in the specified range of the data array.
 /// If there is err in the range, it sets the error flag for the destination index and the return value is discarded by the caller.
-
 pub fn max(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], dest: i32) -> i32 {
     let mut y1 = c1 / n_cols;
     let mut y2 = c2 / n_cols;
@@ -88,7 +87,6 @@ pub fn max(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
     err[dest as usize] = yn;
     ans
 }
-
 
 /// Find the sum of all values in a specified range of the data array.
 /// # Arguments
@@ -130,7 +128,6 @@ pub fn sum(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
     err[dest as usize] = yn;
     ans
 }
-
 
 /// Find the average of all values in a specified range of the data array.
 /// # Arguments

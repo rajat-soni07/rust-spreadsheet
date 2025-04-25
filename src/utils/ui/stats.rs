@@ -16,13 +16,13 @@ use std::cmp;
 ///
 /// # Returns
 /// An array of 8 f64 values containing the following statistics in order:
-/// [count, mean, standard deviation, minimum, 25th percentile, 
+/// [count, mean, standard deviation, minimum, 25th percentile,
 /// median (50th percentile), 75th percentile, maximum]
 ///
 /// # Notes
 /// - For empty input arrays, returns an array of zeros
 /// - Uses the nearest-rank method for percentile calculations
-/// 
+///
 pub fn calculate_stats(data: &[i32]) -> [f64; 8] {
     if data.is_empty() {
         println!("No data provided.");
