@@ -715,14 +715,14 @@ fn non_ui(len_h: i32, len_v: i32) {
                 curr_h = max(1, curr_h - 10);
             }
             "s" => {
-                if curr_v + 10 > len_v {
+                if curr_v + 10 >= len_v {
                     curr_v = len_v - 9
                 } else {
                     curr_v += 10
                 }
             }
             "d" => {
-                if curr_h + 10 > len_h {
+                if curr_h + 10 >= len_h {
                     curr_h = len_h - 9
                 } else {
                     curr_h += 10
