@@ -1291,3 +1291,47 @@ impl eframe::App for Spreadsheet {
         });
     }
 }
+
+/// Runs the graphical user interface for the spreadsheet.
+/// 
+/// # Arguments
+/// 
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// * `len_v` - Height of the spreadsheet (number of rows)
+/// 
+/// # Returns
+/// 
+/// Result from the eframe application run
+/// 
+pub fn ui(len_h: i32, len_v: i32) -> eframe::Result {
+    let database = vec![0; (len_h * len_v + 1) as usize];
+    let err = vec![false; (len_h * len_v + 1) as usize];
+    let opers = vec![
+        crate::Ops {
+            opcpde: String::new(),
+            cell1: -1,
+            cell2: -1
+        };
+        (len_h * len_v + 1) as usize
+    ];
+    let indegree = vec![0; (len_h * len_v + 1) as usize];
+    let sensi = vec![Vec::<i32>::new(); (len_h * len_v + 1) as usize];
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1200.0, 800.0])
+            .with_resizable(false)
+            .with_maximize_button(false),
+
+        ..Default::default()
+    };
+    eframe::run_native(
+        "Spreadsheet",
+        options,
+        Box::new(|cc| {
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+            Ok(Box::new(utils::ui::gui::Spreadsheet::new(
+                len_h, len_v, database, err, opers, indegree, sensi,
+            )))
+        }),
+    )
+}

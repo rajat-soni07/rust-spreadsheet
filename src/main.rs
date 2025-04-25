@@ -784,48 +784,6 @@ fn non_ui(len_h: i32, len_v: i32) {
     }
 }
 
-/// Runs the graphical user interface for the spreadsheet.
-/// 
-/// # Arguments
-/// 
-/// * `len_h` - Width of the spreadsheet (number of columns)
-/// * `len_v` - Height of the spreadsheet (number of rows)
-/// 
-/// # Returns
-/// 
-/// Result from the eframe application run
-fn ui(len_h: i32, len_v: i32) -> eframe::Result {
-    let database = vec![0; (len_h * len_v + 1) as usize];
-    let err = vec![false; (len_h * len_v + 1) as usize];
-    let opers = vec![
-        Ops {
-            opcpde: String::new(),
-            cell1: -1,
-            cell2: -1
-        };
-        (len_h * len_v + 1) as usize
-    ];
-    let indegree = vec![0; (len_h * len_v + 1) as usize];
-    let sensi = vec![Vec::<i32>::new(); (len_h * len_v + 1) as usize];
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1200.0, 800.0])
-            .with_resizable(false)
-            .with_maximize_button(false),
-
-        ..Default::default()
-    };
-    eframe::run_native(
-        "Spreadsheet",
-        options,
-        Box::new(|cc| {
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-            Ok(Box::new(utils::ui::gui::Spreadsheet::new(
-                len_h, len_v, database, err, opers, indegree, sensi,
-            )))
-        }),
-    )
-}
 
 /// Main entry point for the application.
 /// 
@@ -844,7 +802,7 @@ fn main() {
         let len_v: i32 = args[1].parse().unwrap_or(10);
         if args.len() == 4 {
             if args[3] == "--ui" {
-                ui(len_h, len_v).unwrap();
+                crate::utils::ui::gui::ui(len_h, len_v).unwrap();
             }
         } else {
             non_ui(len_h, len_v);
@@ -1328,6 +1286,176 @@ mod tests {
         assert_eq!(database[9], 24); // Sum remains unchanged as A8 is outside the range
     }
 
+    #[test]
+    fn test_complex_cell_updates(){
+        let len_h = 10;
+        let len_v = 10;
+        let mut database = vec![0; (len_h * len_v + 1) as usize];
+        let mut err = vec![false; (len_h * len_v + 1) as usize];
+        let mut opers = vec![
+            Ops {
+                opcpde: String::new(),
+                cell1: -1,
+                cell2: -1
+            };
+            (len_h * len_v + 1) as usize
+        ];
+        let mut indegree = vec![0; (len_h * len_v + 1) as usize];
+        let mut sensi = vec![Vec::<i32>::new(); (len_h * len_v + 1) as usize];
+
+
+        let mut status;
+
+        // Create a series of complex updates to test the spreadsheet functionality
+        let test_inputs =
+            vec![
+                "A1=SUM(B1:B4)",
+                "A1=MIN(B2:B8)",
+                "A1=1",
+                "A1=MAX(B2:B8)",
+                "A1=B2"
+        ];
+
+        // Process each test input
+        for (i, input) in test_inputs.iter().enumerate() {
+            println!("Processing input {}: {}", i+1, input);
+
+            let input = input.trim_end().to_string();
+            // rest of the existing code to process the input
+        
+
+        let out = utils::input::input(&input, len_h, len_v);
+            status = out[4].clone();    
+            if status == "ok" {
+
+                    cell_update(
+                        &out,
+                        &mut database,
+                        &mut sensi,
+                        &mut opers,
+                        len_h,
+                        &mut indegree,
+                        &mut err,
+                    );
+                    
+            }
+        }
+        assert_eq!(database[1], 0); // A1 = 0
+    }
     
+    #[test]
+    fn test_complex_cell_updates_cyclic(){
+        let len_h = 10;
+        let len_v = 10;
+        let mut database = vec![0; (len_h * len_v + 1) as usize];
+        let mut err = vec![false; (len_h * len_v + 1) as usize];
+        let mut opers = vec![
+            Ops {
+                opcpde: String::new(),
+                cell1: -1,
+                cell2: -1
+            };
+            (len_h * len_v + 1) as usize
+        ];
+        let mut indegree = vec![0; (len_h * len_v + 1) as usize];
+        let mut sensi = vec![Vec::<i32>::new(); (len_h * len_v + 1) as usize];
+
+        let mut suc = 0;
+        let mut status;
+
+        // Create a series of complex updates to test the spreadsheet functionality
+        let test_inputs =
+            vec![
+                "A1=A2",
+                "A1=MAX(B2:B8)",
+                "A1=A2",
+                "A1=MIN(B2:B8)",
+                "A1=A1"
+        ];
+
+        // Process each test input
+        for (i, input) in test_inputs.iter().enumerate() {
+            println!("Processing input {}: {}", i+1, input);
+
+            let input = input.trim_end().to_string();
+            // rest of the existing code to process the input
+        
+
+        let out = utils::input::input(&input, len_h, len_v);
+            status = out[4].clone();    
+            if status == "ok" {
+
+                     suc = cell_update(
+                        &out,
+                        &mut database,
+                        &mut sensi,
+                        &mut opers,
+                        len_h,
+                        &mut indegree,
+                        &mut err,
+                    );
+                    
+            }
+        }
+        assert!(suc == 0); 
+    }
+    
+    #[test]
+    fn test_complex_range_updates_cyclic(){
+        let len_h = 10;
+        let len_v = 10;
+        let mut database = vec![0; (len_h * len_v + 1) as usize];
+        let mut err = vec![false; (len_h * len_v + 1) as usize];
+        let mut opers = vec![
+            Ops {
+                opcpde: String::new(),
+                cell1: -1,
+                cell2: -1
+            };
+            (len_h * len_v + 1) as usize
+        ];
+        let mut indegree = vec![0; (len_h * len_v + 1) as usize];
+        let mut sensi = vec![Vec::<i32>::new(); (len_h * len_v + 1) as usize];
+
+        let mut suc = 0;
+        let mut status;
+
+        // Create a series of complex updates to test the spreadsheet functionality
+        let test_inputs =
+            vec![
+                
+                "A1=MAX(B2:B8)",
+                "A1=MAX(A1:B5)"
+        ];
+
+        // Process each test input
+        for (i, input) in test_inputs.iter().enumerate() {
+            println!("Processing input {}: {}", i+1, input);
+
+            let input = input.trim_end().to_string();
+            // rest of the existing code to process the input
+        
+
+        let out = utils::input::input(&input, len_h, len_v);
+            status = out[4].clone();    
+            if status == "ok" {
+
+                     suc = cell_update(
+                        &out,
+                        &mut database,
+                        &mut sensi,
+                        &mut opers,
+                        len_h,
+                        &mut indegree,
+                        &mut err,
+                    );
+                    
+            }
+        }
+        assert!(suc == 0); 
+    }
+    
+      
+
 }
 

@@ -187,7 +187,7 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
                     message = String::from("Invalid Cell");
                     return message;
                 }
-                return message;
+                
             }
 
             if s == 'C' {
@@ -196,6 +196,8 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
                     return message;
                 }
                 return message;
+            }else{
+                return  message;
             }
         } else {
             message = String::from("Invalid Operation");
@@ -406,12 +408,247 @@ pub fn input(input: &str, len_h: i32, len_v: i32) -> Vec<String> {
 
     output
 }
-// fn main(){
-//     // let outp=is_valid_cell(&String::from("SUM"),100,100);
-//     // println!("{}",outp);
-//     let inp = String::from("A1=SUM");
-//     let output = input(&inp,55,55);
-//     for i in 0..5{
-//         println!("{}",output[i]);
-//     }
-// }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_arth() {
+        assert!(is_arth("A1=B1+C1"));
+        assert!(is_arth("A1=5"));
+        assert!(!is_arth("A1=SUM(B1:C5)"));
+        assert!(!is_arth("A1=AVG(B1:C5)"));
+    }
+
+    #[test]
+    fn test_is_scroll() {
+        assert!(is_scroll("scroll_to A1"));
+        assert!(!is_scroll("A1=B1"));
+        assert!(!is_scroll("A1=5+3"));
+        assert!(!is_scroll("A1=SUM(B1:C5)"));
+    }
+
+    #[test]
+    fn test_is_integer() {
+        assert!(is_integer("123"));
+        assert!(is_integer("-456"));
+        assert!(is_integer("+789"));
+        assert!(!is_integer("12A"));
+        assert!(!is_integer("A1"));
+        assert!(!is_integer("12.3"));
+    }
+
+    #[test]
+    fn test_is_valid_cell() {
+        assert!(is_valid_cell("A1", 26, 100));
+        assert!(is_valid_cell("Z99", 26, 100));
+        assert!(!is_valid_cell("A0", 26, 100));
+        assert!(!is_valid_cell("Z101", 26, 100));
+        assert!(!is_valid_cell("AA1", 26, 100));
+        assert!(!is_valid_cell("1A", 26, 100));
+        assert!(!is_valid_cell("A", 26, 100));
+    }
+
+    #[test]
+    fn test_is_valid_range() {
+        assert!(is_valid_range("A1", "B2", 26, 100));
+        assert!(is_valid_range("A1", "A10", 26, 100));
+        assert!(!is_valid_range("B2", "A1", 26, 100));
+        assert!(!is_valid_range("A10", "A1", 26, 100));
+        assert!(!is_valid_range("A0", "A10", 26, 100));
+        assert!(!is_valid_range("A1", "Z101", 26, 100));
+    }
+
+    #[test]
+    fn test_help_input_arithmetic() {
+        let result = help_input("A1=B1+C1");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "CCA");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C1");
+
+        let result = help_input("A1=10-5");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "VVS");
+        assert_eq!(result[2], "10");
+        assert_eq!(result[3], "5");
+
+        let result = help_input("A1=B2*3");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "CVM");
+        assert_eq!(result[2], "B2");
+        assert_eq!(result[3], "3");
+    }
+
+    #[test]
+    fn test_help_input_functions() {
+        let result = help_input("A1=SUM(B1:C5)");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "SUM");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C5");
+
+        let result = help_input("A1=AVG(B1:C5)");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "MEA");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C5");
+
+        let result = help_input("A1=STDEV(B1:C5)");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "STD");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C5");
+    }
+
+    #[test]
+    fn test_help_input_assignment() {
+        let result = help_input("A1=5");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "EQV");
+        assert_eq!(result[2], "5");
+
+        let result = help_input("A1=B2");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "EQC");
+        assert_eq!(result[2], "B2");
+    }
+
+    #[test]
+    fn test_help_input_special() {
+        let result = help_input("scroll_to A1");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "SRL");
+
+        let result = help_input("A1=SLEEP(1000)");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "SLV");
+        assert_eq!(result[2], "1000");
+
+        let result = help_input("A1=SLEEP(B2)");
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "SLC");
+        assert_eq!(result[2], "B2");
+    }
+
+    #[test]
+    fn test_check_err() {
+        let mut output = vec![
+            String::from("A1"),
+            String::from("EQV"),
+            String::from("5"),
+            String::new(),
+        ];
+        assert_eq!(check_err("A1=5", &output, 26, 100), "ok");
+
+        output = vec![
+            String::from("Z101"),
+            String::from("EQV"),
+            String::from("5"),
+            String::new(),
+        ];
+        assert_eq!(
+            check_err("Z101=5", &output, 26, 100),
+            "Assigned Cell out of bounds"
+        );
+
+        output = vec![
+            String::from("A1"),
+            String::from("SUM"),
+            String::from("B2"),
+            String::from("A1"),
+        ];
+        assert_eq!(
+            check_err("A1=SUM(B2:A1)", &output, 26, 100),
+            "Invalid Range"
+        );
+    }
+
+    #[test]
+    fn test_input_integration() {
+        let result = input("A1=B1+C1", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "CCA");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C1");
+        assert_eq!(result[4], "ok");
+
+        let result = input("Z101=5", 26, 100);
+        assert_eq!(result[4], "Assigned Cell out of bounds");
+
+        let result = input("A1=SUM(B2:A1)", 26, 100);
+        assert_eq!(result[4], "Invalid Range");
+    }
+
+    #[test]
+    fn test_input_with_spaces() {
+        let result = input("A1=B1+C1", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "CCA");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C1");
+        assert_eq!(result[4], "ok");
+        
+        let result = input("A1=5", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "EQV");
+        assert_eq!(result[2], "5");
+        assert_eq!(result[4], "ok");
+    }
+    
+    #[test]
+    fn test_min_max_functions() {
+        let result = input("A1=MIN(B1:C5)", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "MIN");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C5");
+        assert_eq!(result[4], "ok");
+        
+        let result = input("A1=MAX(B1:C5)", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "MAX");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C5");
+        assert_eq!(result[4], "ok");
+    }
+    
+    #[test]
+    fn test_invalid_operations() {
+        let result = input("A1=INVALID(B1:C5)", 26, 100);
+        assert_eq!(result[4], "Invalid Operation");
+        
+        let result = input("scroll_invalid A1", 26, 100);
+        assert_eq!(result[4], "Invalid Operation");
+    }
+    
+    #[test]
+    fn test_division_and_multiplication() {
+        let result = input("A1=B1/C1", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "CCD");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "C1");
+        assert_eq!(result[4], "ok");
+        
+        let result = input("A1=B1*5", 26, 100);
+        assert_eq!(result[0], "A1");
+        assert_eq!(result[1], "CVM");
+        assert_eq!(result[2], "B1");
+        assert_eq!(result[3], "5");
+        assert_eq!(result[4], "ok");
+    }
+    
+    #[test]
+    fn test_cell_out_of_bounds() {
+        let result = input("scroll_to Z101", 26, 100);
+        assert_eq!(result[4], "Scroll Cell out of bounds");
+        
+        let result = input("A1=Z101", 26, 100);
+        assert_eq!(result[4], "Invalid Cell");
+        
+        let result = input("A1=B1+Z101", 26, 100);
+        assert_eq!(result[4], "Invalid Cell");
+    }
+}
