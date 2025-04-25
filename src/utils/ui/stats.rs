@@ -1,5 +1,28 @@
+//! Statistical analysis utilities for the spreadsheet application.
+//!
+//! This module provides functions to calculate descriptive statistics on
+//! numerical data from the spreadsheet, including central tendency measures,
+//! variability measures, and percentiles.
 use std::cmp;
 
+/// Calculates descriptive statistics for a set of integer data.
+///
+/// This function computes a comprehensive set of statistical measures for the given
+/// data array, including count, mean, standard deviation, minimum, maximum, and
+/// key percentile values (25th, 50th/median, and 75th).
+///
+/// # Arguments
+/// * `data` - Slice of integer values to analyze
+///
+/// # Returns
+/// An array of 8 f64 values containing the following statistics in order:
+/// [count, mean, standard deviation, minimum, 25th percentile, 
+/// median (50th percentile), 75th percentile, maximum]
+///
+/// # Notes
+/// - For empty input arrays, returns an array of zeros
+/// - Uses the nearest-rank method for percentile calculations
+/// 
 pub fn calculate_stats(data: &[i32]) -> [f64; 8] {
     if data.is_empty() {
         println!("No data provided.");

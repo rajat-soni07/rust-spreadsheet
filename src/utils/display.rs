@@ -1,7 +1,29 @@
+//! This module contains functions to display a grid of data with labels.
+//! It includes functions to shift characters for labeling columns and to display the grid with error handling.
+
+/// Shifts a character by a given integer value.
+/// # Arguments
+/// * `c` - The character to be shifted.
+/// * `i` - The integer value to shift the character by.
+/// # Returns
+/// The shifted character.
 fn shift_char(c: char, i: i32) -> char {
     (c as i8 + i as i8) as u8 as char
 }
 
+/// Gets the label for a given integer.
+/// # Arguments
+/// * `a` - The integer to be converted to a label.
+/// # Returns
+/// A string representing the label.
+/// The label is generated based on the integer value, with a specific mapping to letters.
+/// The mapping is as follows:
+/// - 1 to 26 maps to A to Z
+/// - 27 to 702 maps to AA to ZZ
+/// - 703 to 18277 maps to AAA to ZZZ
+/// The function handles the conversion by calculating the appropriate letters based on the integer value.
+/// The function uses a helper function `shift_char` to perform the character shifting.
+/// The function returns a string representing the label.
 pub fn get_label(a: i32) -> String {
     let mut temp = String::new();
     let mut num = a - 1;
@@ -23,6 +45,20 @@ pub fn get_label(a: i32) -> String {
     temp
 }
 
+/// Displays a grid of data with labels.
+/// # Arguments
+/// * `top_h` - The starting horizontal index.
+/// * `top_v` - The starting vertical index.
+/// * `len_h` - The length of the horizontal axis.
+/// * `len_v` - The length of the vertical axis.
+/// * `database` - A slice of integers representing the data.
+/// * `err` - A slice of booleans representing error states for each data point.
+/// # Returns
+/// This function does not return a value.
+/// It prints the grid to the console.
+/// The grid is displayed with labels for the columns and rows.
+/// The labels are generated using the `get_label` function.
+/// The data points are displayed in the grid, with "ERR" printed for any data point that has an error.
 pub fn display_grid(
     top_h: i32,
     top_v: i32,

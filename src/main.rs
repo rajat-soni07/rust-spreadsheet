@@ -1,8 +1,26 @@
+//! # Rust Spreadsheet Application
+//! 
+//! This is the main entry point for the Rust Spreadsheet application, which provides
+//! both a terminal-based and graphical user interface for a spreadsheet-like grid system.
+//! 
+//! The application supports:
+//! - Formula-based cell calculations with dependency tracking
+//! - Cycle detection in cell references
+//! - Various operations including arithmetic, statistical functions, and time delays
+//! - Both terminal and graphical user interfaces
+
 use std::io;
 use std::io::Write;
 
 mod utils;
 
+/// Represents an operation to be performed on a cell.
+/// 
+/// # Fields
+/// 
+/// * `opcpde` - Operation code specifying what calculation to perform
+/// * `cell1` - First operand (either a cell reference or direct value)
+/// * `cell2` - Second operand (either a cell reference or direct value)
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 struct Ops {
     opcpde: String,
@@ -19,10 +37,29 @@ impl Clone for Ops {
     }
 }
 
+/// Returns the maximum of two integers.
+/// 
+/// # Arguments
+/// 
+/// * `a` - First integer
+/// * `b` - Second integer
+/// 
+/// # Returns
+/// 
+/// The larger of the two input values
 fn max(a: i32, b: i32) -> i32 {
     if a > b { a } else { b }
 }
 
+/// Converts a cell reference string (like "A1") to an integer representation.
+/// 
+/// # Arguments
+/// 
+/// * `a` - Cell reference string (e.g., "A1", "B2", etc.)
+/// 
+/// # Returns
+/// 
+/// An integer representation where column is multiplied by 1000 and added to row
 fn cell_to_int(a: &str) -> i32 {
     let mut col = 0;
     let b = a.chars();
@@ -51,14 +88,43 @@ fn cell_to_int(a: &str) -> i32 {
     col * 1000 + row
 }
 
+/// Converts an integer cell representation to a linear index in the spreadsheet array.
+/// 
+/// # Arguments
+/// 
+/// * `a` - Integer representation of a cell
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// 
+/// # Returns
+/// 
+/// Linear index in the spreadsheet array
 fn int_to_ind(a: i32, len_h: i32) -> i32 {
     (a / 1000) + (a % 1000 - 1) * len_h
 }
 
+/// Converts a cell reference string directly to a linear index in the spreadsheet array.
+/// 
+/// # Arguments
+/// 
+/// * `a` - Cell reference string (e.g., "A1", "B2", etc.)
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// 
+/// # Returns
+/// 
+/// Linear index in the spreadsheet array
 fn cell_to_ind(a: &str, len_h: i32) -> i32 {
     int_to_ind(cell_to_int(a), len_h)
 }
 
+/// Calculates the value of a cell based on its operation and dependencies.
+/// 
+/// # Arguments
+/// 
+/// * `cell` - Index of the cell to calculate
+/// * `database` - Mutable reference to the array of cell values
+/// * `opers` - Slice of operations for each cell
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// * `err` - Mutable reference to the array tracking cell errors
 fn calc(cell: i32, database: &mut [i32], opers: &[Ops], len_h: i32, err: &mut [bool]) {
     match opers[cell as usize].opcpde.as_str() {
         "CCA" => {
@@ -228,11 +294,39 @@ fn calc(cell: i32, database: &mut [i32], opers: &[Ops], len_h: i32, err: &mut [b
     }
 }
 
+/// Updates cell values according to a topological ordering of dependencies.
+/// 
+/// # Arguments
+/// 
+/// * `topo_arr` - Topologically sorted array of cell indices
+/// * `database` - Mutable reference to the array of cell values
+/// * `opers` - Slice of operations for each cell
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// * `err` - Mutable reference to the array tracking cell errors
 fn val_update(topo_arr: &[i32], database: &mut [i32], opers: &[Ops], len_h: i32, err: &mut [bool]) {
     for i in 1..=topo_arr[0] {
         calc(topo_arr[i as usize], database, opers, len_h, err)
     }
 }
+
+/// Updates a cell with a new operation and recalculates dependent cells.
+/// 
+/// This function handles the dependency tracking, cycle detection, and propagation
+/// of changes through the spreadsheet.
+/// 
+/// # Arguments
+/// 
+/// * `inp_arr` - Input array containing cell reference and operation details
+/// * `database` - Mutable reference to the array of cell values
+/// * `sensi` - Mutable reference to the sensitivity list for dependency tracking
+/// * `opers` - Mutable reference to the array of cell operations
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// * `indegree` - Mutable reference to the array tracking in-degrees for cycle detection (used in toposort)
+/// * `err` - Mutable reference to the array tracking cell errors
+/// 
+/// # Returns
+/// 
+/// 1 if update was successful, 0 if a cycle was detected
 
 fn cell_update(
     inp_arr: &[String],
@@ -577,6 +671,13 @@ fn cell_update(
     }
 }
 
+/// Runs the terminal-based user interface for the spreadsheet.
+/// 
+/// # Arguments
+/// 
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// * `len_v` - Height of the spreadsheet (number of rows)
+
 fn non_ui(len_h: i32, len_v: i32) {
     let mut database = vec![0; (len_h * len_v + 1) as usize];
     let mut err = vec![false; (len_h * len_v + 1) as usize];
@@ -682,6 +783,16 @@ fn non_ui(len_h: i32, len_v: i32) {
     }
 }
 
+/// Runs the graphical user interface for the spreadsheet.
+/// 
+/// # Arguments
+/// 
+/// * `len_h` - Width of the spreadsheet (number of columns)
+/// * `len_v` - Height of the spreadsheet (number of rows)
+/// 
+/// # Returns
+/// 
+/// Result from the eframe application run
 fn ui(len_h: i32, len_v: i32) -> eframe::Result {
     let database = vec![0; (len_h * len_v + 1) as usize];
     let err = vec![false; (len_h * len_v + 1) as usize];
@@ -715,6 +826,16 @@ fn ui(len_h: i32, len_v: i32) -> eframe::Result {
     )
 }
 
+/// Main entry point for the application.
+/// 
+/// Parses command line arguments and launches either the terminal-based
+/// or graphical user interface with the specified dimensions.
+/// 
+/// # Command Line Arguments
+/// 
+/// * First argument: Number of rows
+/// * Second argument: Number of columns
+/// * Third argument (optional): "--ui" to launch the graphical interface
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() >= 3 {

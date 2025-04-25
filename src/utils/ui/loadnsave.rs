@@ -1,3 +1,13 @@
+//! File handling utilities for the spreadsheet application.
+//!
+//! This module provides functions to save and load spreadsheet data in different formats:
+//! - Native format (.rsk) for preserving all spreadsheet state using JSON serialization
+//! - CSV export for compatibility with other spreadsheet applications
+//! - PDF export for creating printable documents from spreadsheet data
+//!
+//! The module handles serialization and deserialization of the spreadsheet state and
+//! creation of formatted output files.
+
 use crate::utils::ui;
 use csv::Writer;
 use genpdf::{Document, Element, elements};
@@ -5,6 +15,15 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 
+/// Saves spreadsheet data to a file in the native format (.rsk).
+///
+/// This function serializes the entire spreadsheet state to JSON and writes it to the specified path.
+/// The native format preserves all application state including formulas, cell relationships, 
+/// and UI settings.
+///
+/// # Arguments
+/// * `data` - Mutable reference to the spreadsheet to be saved
+/// * `path` - Path where the file will be saved
 pub fn save_to_file(data: &mut ui::gui::Spreadsheet, path: &str) {
     let json_data = serde_json::to_string(data).expect("Failed to serialize data");
 
@@ -15,6 +34,16 @@ pub fn save_to_file(data: &mut ui::gui::Spreadsheet, path: &str) {
     println!("Data saved successfully to {}", path);
 }
 
+/// Reads spreadsheet data from a file in the native format (.rsk).
+///
+/// This function reads a JSON file and deserializes it into a Spreadsheet struct,
+/// restoring the complete application state.
+///
+/// # Arguments
+/// * `path` - Path to the file to be read
+///
+/// # Returns
+/// A new Spreadsheet instance with the loaded data
 pub fn read_from_file(path: &str) -> ui::gui::Spreadsheet {
     let file_content = std::fs::read_to_string(path).expect("Failed to read file");
     let spreadsheet: ui::gui::Spreadsheet =
@@ -24,6 +53,20 @@ pub fn read_from_file(path: &str) -> ui::gui::Spreadsheet {
     spreadsheet
 }
 
+/// Exports spreadsheet data to a CSV file.
+///
+/// This function creates a CSV file containing the visible values from the spreadsheet.
+/// Cells with errors are marked with "ERR".
+///
+/// # Arguments
+/// * `data` - Slice containing cell values
+/// * `err` - Slice indicating which cells have errors
+/// * `len_h` - Number of columns in the spreadsheet
+/// * `len_v` - Number of rows in the spreadsheet
+/// * `filename` - Path where the CSV file will be saved
+///
+/// # Returns
+/// `Ok(())` if the operation was successful, or an error otherwise
 pub fn save_1d_as_csv(
     data: &[i32],
     err: &[bool],
@@ -50,6 +93,21 @@ pub fn save_1d_as_csv(
     Ok(())
 }
 
+/// Exports spreadsheet data to a PDF file.
+///
+/// This function creates a formatted PDF document representing the spreadsheet content.
+/// The PDF includes proper pagination for large spreadsheets, with each page showing up to 
+/// 10x10 cells. Cells with errors are marked with "ERR".
+///
+/// # Arguments
+/// * `data` - Slice containing cell values
+/// * `err` - Slice indicating which cells have errors
+/// * `len_h` - Number of columns in the spreadsheet
+/// * `len_v` - Number of rows in the spreadsheet
+/// * `filename` - Path where the PDF file will be saved
+///
+/// # Returns
+/// `Ok(())` if the operation was successful, or an error otherwise
 pub fn save_1d_as_pdf(
     data: &[i32],
     err: &[bool],

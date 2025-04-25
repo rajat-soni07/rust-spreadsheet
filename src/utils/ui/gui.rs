@@ -1,25 +1,112 @@
+//! This module contains main implementation for GUI Spreadsheet.
+
 use crate::utils;
 use crate::utils::ui;
 use eframe::egui;
 use egui::{Button, Color32, FontId, RichText};
 use notify_rust::Notification;
 
+/// Gives minimum of two integers.
+/// # Arguments
+/// * `a` - 1st Integer value.
+/// * `b` - 2nd Integer value.
+/// # Returns
+/// The minimum of two integers.
 fn min(a: i32, b: i32) -> i32 {
     if a < b { a } else { b }
 }
 
+/// Represents the file format used for saving spreadsheet data.
+/// 
+/// # Variants
+/// 
+/// * `Rsk` - Save in Rust Spreadsheet native format (.rsk). This format preserves all spreadsheet
+///   data including formulas, cell relationships, and application state.
+/// 
+/// * `Csv` - Save in Comma-Separated Values format (.csv). This format only saves visible cell
+///   values and is compatible with other spreadsheet applications, but formulas and other
+///   application state will be lost.
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq, Clone)]
 enum Save {
     Rsk,
     Csv,
 }
 
+/// Represents the plot type for data visualization.
+/// 
+/// # Variants
+/// 
+/// * `Line` - Creates a line plot connecting data points with lines. Useful for showing trends
+///   over a continuous domain or time series data where the progression between points matters.
+/// 
+/// * `Scatter` - Creates a scatter plot showing individual data points without connecting lines.
+///   Useful for visualizing the distribution and correlation of two variables without implying
+///   continuity between points.
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq, Clone)]
 enum Plot {
     Line,
     Scatter,
 }
 
+/// Represents the main spreadsheet application state.
+/// 
+/// This struct contains all data needed to maintain the state of the spreadsheet including
+/// the cell values, formulas, UI state, dialog states, and various application settings.
+/// 
+/// # Fields
+/// 
+/// ## Core Spreadsheet Data
+/// * `len_h` - Horizontal length (number of columns) in the spreadsheet
+/// * `len_v` - Vertical length (number of rows) in the spreadsheet
+/// * `top_h` - Current leftmost visible column index
+/// * `top_v` - Current topmost visible row index
+/// * `database` - Vector storing all cell values as integers
+/// * `err` - Vector indicating whether each cell contains an error
+/// * `formula` - Vector storing formulas for each cell
+/// 
+/// ## UI State
+/// * `terminal` - Current input in the command terminal
+/// * `cell_ref` - Tuple containing (cell reference string, is_editing, needs_focus)
+/// * `selected_cell` - Currently selected cell index, if any
+/// * `hovered_cell` - Cell index currently being hovered over, if any
+/// * `temp_txt` - Tuple containing (temporary text for cell editing, needs_focus)
+/// * `clipbaord` - Content stored in the application clipboard
+/// 
+/// ## Formula Processing
+/// * `opers` - Vector of operations to be performed on cells
+/// * `indegree` - Vector tracking dependencies between cells for cycle detection
+/// * `sensi` - Vector of vectors tracking which cells depend on other cells
+/// 
+/// ## Dialog States
+/// * `save_dialog` - Whether save dialog is open
+/// * `save_path` - Current path in save dialog
+/// * `save_name` - Current filename in save dialog
+/// * `save_type` - Selected file format for saving
+/// * `save_todo` - Pending save operation, if any
+/// 
+/// * `load_dialog` - Whether load dialog is open
+/// * `load_path` - Current path in load dialog
+/// * `load_todo` - Whether a load operation is pending
+/// 
+/// * `plot_dialog` - Whether plot dialog is open
+/// * `plot_x_axis` - X-axis column selection for plotting
+/// * `plot_y_axis` - Y-axis column selection for plotting
+/// * `plot_rows` - Row range selection for plotting
+/// * `plot_type` - Selected plot type
+/// * `plot_save` - Path for saving plot image
+/// * `plot_todo` - Whether a plot operation is pending
+/// 
+/// * `pdf_dialog` - Whether PDF export dialog is open
+/// * `pdf_path` - Path for saving PDF file
+/// * `pdf_todo` - Whether a PDF export operation is pending
+/// 
+/// * `describe_dialog` - Whether statistical description dialog is open
+/// * `describe_range` - Cell range for statistical analysis
+/// * `describe_data` - Array storing statistical results [count, mean, std, min, p25, p50, p75, max]
+/// 
+/// * `about_dialog` - Whether about dialog is open
+/// 
+/// * `initialized_time` - Timestamp when the spreadsheet was initialized
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct Spreadsheet {
     len_h: i32,
