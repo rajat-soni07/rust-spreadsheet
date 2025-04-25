@@ -223,5 +223,5 @@ pub fn stdev(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool],
     var /= ct as f64;
     err[dest as usize] = yn;
 
-    var.sqrt() as i32
+    var.sqrt().round() as i32
 }
