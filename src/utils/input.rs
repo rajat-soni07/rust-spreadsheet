@@ -1,33 +1,13 @@
-// use crate::cell_to_int;
+//! This module contains functions for parsing input and checking if input is valid.
+use crate::cell_to_int;
 
-fn cell_to_int(a: &str) -> i32 {
-    let mut col = 0;
-    let b = a.chars();
-    let mut part = 0;
-    for c in b.clone() {
-        if c.is_alphabetic() {
-            part += 1;
-        } else {
-            break;
-        }
-    }
-
-    for i in a[..part].chars() {
-        let diff = i as i32 - 'A' as i32 + 1;
-
-        if (1..=26).contains(&diff) {
-            col *= 26;
-            col += diff;
-        } else {
-            break;
-        }
-    }
-
-    let row: i32 = a[part..].parse().unwrap_or(0);
-
-    col * 1000 + row
-}
-
+/// Checks if the input is of arithmetic type.
+/// 
+/// # Arguments
+/// * `input` - A string slice containing the input to check
+/// 
+/// # Returns
+/// * `bool` - true if input is arithmetic (does not contain parentheses), false otherwise
 fn is_arth(input: &str) -> bool {
     for c in input.chars() {
         if c == '(' {
@@ -37,6 +17,13 @@ fn is_arth(input: &str) -> bool {
     true
 }
 
+/// Checks if the input is a scroll operation.
+/// 
+/// # Arguments
+/// * `input` - A string slice containing the input to check
+/// 
+/// # Returns
+/// * `bool` - true if input is a scroll operation (no '=' character), false otherwise
 fn is_scroll(input: &str) -> bool {
     // if input is found true by is_arth and it does not contain =, then it is scroll_to
     for c in input.chars() {
@@ -47,8 +34,14 @@ fn is_scroll(input: &str) -> bool {
     true
 }
 
+/// Checks if the input string represents an integer.
+/// 
+/// # Arguments
+/// * `input` - A string slice containing the input to check
+/// 
+/// # Returns
+/// * `bool` - true if input is an integer value, false otherwise
 fn is_integer(input: &str) -> bool {
-    //need to change
     let mut first = 1;
     for c in input.chars() {
         if first == 1 {
@@ -65,6 +58,15 @@ fn is_integer(input: &str) -> bool {
     true
 }
 
+/// Validates if a cell reference is within bounds.
+/// 
+/// # Arguments
+/// * `cell` - A string slice containing the cell reference (e.g., "A1")
+/// * `len_h` - An i32 representing the horizontal boundary (columns)
+/// * `len_v` - An i32 representing the vertical boundary (rows)
+/// 
+/// # Returns
+/// * `bool` - true if the cell is valid and within bounds, false otherwise
 pub fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
     // input no of rows,no of cols
     let n = cell.len();
@@ -102,6 +104,16 @@ pub fn is_valid_cell(cell: &str, len_h: i32, len_v: i32) -> bool {
     false
 }
 
+/// Validates if a cell range is valid and within bounds.
+/// 
+/// # Arguments
+/// * `cell1` - A string slice containing the first cell reference
+/// * `cell2` - A string slice containing the second cell reference
+/// * `len_h` - An i32 representing the horizontal boundary (columns)
+/// * `len_v` - An i32 representing the vertical boundary (rows)
+/// 
+/// # Returns
+/// * `bool` - true if the range is valid and within bounds, false otherwise
 fn is_valid_range(cell1: &str, cell2: &str, len_h: i32, len_v: i32) -> bool {
     let k1 = cell_to_int(cell1);
     let r1 = k1 % 1000;
@@ -114,6 +126,16 @@ fn is_valid_range(cell1: &str, cell2: &str, len_h: i32, len_v: i32) -> bool {
         (r1 > 0 && c1 > 0) && (r2 > 0 && c2 > 0)
 }
 
+/// Checks for errors in the parsed input based on operation type and cell references.
+/// 
+/// # Arguments
+/// * `input` - A string slice containing the original input
+/// * `output` - A slice of Strings containing the parsed components
+/// * `len_h` - An i32 representing the horizontal boundary (columns)
+/// * `len_v` - An i32 representing the vertical boundary (rows)
+/// 
+/// # Returns
+/// * `String` - "ok" if no errors, otherwise a relevant error message
 fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
     let mut message = String::from("ok");
     let vec1 = ["MEA", "STD", "SUM", "MIN", "MAX"];
@@ -183,6 +205,51 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
     message
 }
 
+/// Parses input into components without validation.
+/// 
+/// # OPCODES
+/// Strings of length 3 to determine type of operation:
+/// 
+/// ## Arithmetic Operations
+/// Format: [Operand1Type][Operand2Type][OperationType]
+/// - Operand types:
+///   - 'C': Cell reference (e.g., 'A1')
+///   - 'V': Value (integer)
+/// - Operation types:
+///   - 'A': Addition (+)
+///   - 'M': Multiplication (*)
+///   - 'D': Division (/)
+///   - 'S': Subtraction (-)
+/// - Examples:
+///   - "VVA": Value + Value
+///   - "CCA": Cell + Cell
+///   - "CVD": Cell / Value
+/// 
+/// ## Assignment Operations
+/// - "EQV": Assign value to cell (e.g., A1=5)
+/// - "EQC": Assign cell value to another cell (e.g., A1=B2)
+/// 
+/// ## Function Operations
+/// - "MEA": Average function (AVG)
+/// - "STD": Standard deviation function (STDEV)
+/// - "SUM": Sum function
+/// - "MIN": Minimum value function
+/// - "MAX": Maximum value function
+/// 
+/// ## Special Operations
+/// - "SRL": Scroll to a specific cell
+/// - "SLV": Sleep for a value (time in ms)
+/// - "SLC": Sleep for a cell value (time in ms)
+/// 
+/// # Arguments
+/// * `input` - A string slice containing the input to parse
+/// 
+/// # Returns
+/// * `Vec<String>` - Vector containing the parsed components:
+///   - `output[0]` - Destination Cell
+///   - `output[1]` - OPCODE (as described above)
+///   - `output[2]` - First operand
+///   - `output[3]` - Second operand (may be empty)
 pub fn help_input(input: &str) -> Vec<String> {
     let mut output = vec![String::new(); 4];
     let input_arr: Vec<char> = input.chars().collect();
@@ -322,6 +389,15 @@ pub fn help_input(input: &str) -> Vec<String> {
     output
 }
 
+/// Parses and validates input for spreadsheet operations.
+/// 
+/// # Arguments
+/// * `input` - A string slice containing the input to parse and validate
+/// * `len_h` - An i32 representing the horizontal boundary (columns)
+/// * `len_v` - An i32 representing the vertical boundary (rows)
+/// 
+/// # Returns
+/// * `Vec<String>` - Vector containing the parsed components(output of `help_input` function) and validation message (output of `check_err` function).
 pub fn input(input: &str, len_h: i32, len_v: i32) -> Vec<String> {
     let mut output = help_input(input);
 

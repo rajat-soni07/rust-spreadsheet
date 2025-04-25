@@ -1,3 +1,18 @@
+//! This module contains functions for performing various operations on a 2D data array.
+//! The operations include finding the minimum, maximum, sum, average, and standard deviation of elements
+//! within a specified range of the data array. The functions also handle error checking and return the results accordingly.
+
+/// Find the minimum value in a specified range of the data array.
+/// # Arguments
+/// * `c1` - The starting cell index (1-based).
+/// * `c2` - The ending cell index (1-based).
+/// * `data_base` - A reference to the data array.
+/// * `n_cols` - The number of cells in the data array.
+/// * `err` - A mutable reference to a boolean array for error checking.
+/// * `dest` - The destination index in the error array to store the error status.
+/// # Returns
+/// The minimum value found in the specified range.
+/// If there is err in the range, it sets the error flag for the destination index and the return value is discarded by the caller.
 pub fn min(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], dest: i32) -> i32 {
     let mut y1 = c1 / n_cols;
     let mut y2 = c2 / n_cols;
@@ -29,6 +44,18 @@ pub fn min(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
     err[dest as usize] = yn;
     ans
 }
+
+/// Find the maximum value in a specified range of the data array.
+/// # Arguments
+/// * `c1` - The starting cell index (1-based).
+/// * `c2` - The ending cell index (1-based).
+/// * `data_base` - A reference to the data array.
+/// * `n_cols` - The number of cells in the data array.
+/// * `err` - A mutable reference to a boolean array for error checking.
+/// * `dest` - The destination index in the error array to store the error status.
+/// # Returns 
+/// The maximum value found in the specified range of the data array.
+/// If there is err in the range, it sets the error flag for the destination index and the return value is discarded by the caller.
 
 pub fn max(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], dest: i32) -> i32 {
     let mut y1 = c1 / n_cols;
@@ -62,6 +89,18 @@ pub fn max(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
     ans
 }
 
+
+/// Find the sum of all values in a specified range of the data array.
+/// # Arguments
+/// * `c1` - The starting cell index (1-based).
+/// * `c2` - The ending cell index (1-based).
+/// * `data_base` - A reference to the data array.
+/// * `n_cols` - The number of cells in the data array.
+/// * `err` - A mutable reference to a boolean array for error checking.
+/// * `dest` - The destination index in the error array to store the error status.
+/// # Returns
+/// The sum of all values found in the specified range.
+/// If there is err in the range, it sets the error flag for the destination index and the return value is discarded by the caller.
 pub fn sum(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], dest: i32) -> i32 {
     let mut y1 = c1 / n_cols;
     let mut y2 = c2 / n_cols;
@@ -92,6 +131,18 @@ pub fn sum(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
     ans
 }
 
+
+/// Find the average of all values in a specified range of the data array.
+/// # Arguments
+/// * `c1` - The starting cell index (1-based).
+/// * `c2` - The ending cell index (1-based).
+/// * `data_base` - A reference to the data array.
+/// * `n_cols` - The number of cells in the data array.
+/// * `err` - A mutable reference to a boolean array for error checking.
+/// * `dest` - The destination index in the error array to store the error status.
+/// # Returns
+/// The average of all values found in the specified range.
+/// If there is err in the range, it sets the error flag for the destination index and the return value is discarded by the caller.
 pub fn avg(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], dest: i32) -> i32 {
     let mut y1 = c1 / n_cols;
     let mut y2 = c2 / n_cols;
@@ -124,6 +175,17 @@ pub fn avg(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], d
     ans / ct
 }
 
+/// Find the standard deviation of all values in a specified range of the data array.
+/// # Arguments
+/// * `c1` - The starting cell index (1-based).
+/// * `c2` - The ending cell index (1-based).
+/// * `data_base` - A reference to the data array.
+/// * `n_cols` - The number of cells in the data array.
+/// * `err` - A mutable reference to a boolean array for error checking.
+/// * `dest` - The destination index in the error array to store the error status.
+/// # Returns
+/// The standard deviation of all values found in the specified range.
+/// If there is err in the range, it sets the error flag for the destination index and the return value is discarded by the caller.
 pub fn stdev(c1: i32, c2: i32, data_base: &[i32], n_cols: i32, err: &mut [bool], dest: i32) -> i32 {
     let mut y1 = c1 / n_cols;
     let mut y2 = c2 / n_cols;
