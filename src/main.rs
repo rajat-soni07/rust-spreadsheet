@@ -9,6 +9,7 @@
 //! - Various operations including arithmetic, statistical functions, and time delays
 //! - Both terminal and graphical user interfaces
 
+
 use std::io;
 use std::io::Write;
 
@@ -852,3 +853,481 @@ fn main() {
         println!("Usage: cargo run <len_h> <len_v> <flag>");
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_max() {
+        assert_eq!(max(5, 3), 5);
+        assert_eq!(max(-5, -3), -3);
+        assert_eq!(max(0, 0), 0);
+    }
+
+    #[test]
+    fn test_cell_to_int() {
+        assert_eq!(cell_to_int("A1"), 1001);
+        assert_eq!(cell_to_int("B5"), 2005);
+        assert_eq!(cell_to_int("Z10"), 26010);
+        assert_eq!(cell_to_int("AA1"), 27001);
+    }
+
+    #[test]
+    fn test_int_to_ind() {
+        assert_eq!(int_to_ind(1001, 10), 1); // A1 in 10x10 grid
+        assert_eq!(int_to_ind(2005, 10), 2 + (5-1)*10); // B5 in 10x10 grid
+        assert_eq!(int_to_ind(3003, 5), 3 + (3-1)*5); // C3 in 5x5 grid
+    }
+
+    #[test]
+    fn test_cell_to_ind() {
+        assert_eq!(cell_to_ind("A1", 10), 1);
+        assert_eq!(cell_to_ind("B5", 10), 2 + (5-1)*10);
+        assert_eq!(cell_to_ind("C3", 5), 3 + (3-1)*5);
+    }
+
+    #[test]
+    fn test_calc_basic_arithmetic() {
+        let mut database = vec![0, 10, 5, 0]; // Index 0 unused, A1=10, B1=5, C1=0
+        let mut err = vec![false, false, false, false];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 5, cell2: -1 },  // B1 = 5
+            Ops { opcpde: String::from("VVA"), cell1: 7, cell2: 3 }    // C1 = 7 + 3
+        ];
+        
+        calc(3, &mut database, &opers, 3, &mut err);
+        assert_eq!(database[3], 10); // 7 + 3 = 10
+        assert_eq!(err[3], false);
+    }
+
+    #[test]
+    fn test_calc_all_arithmetics() {
+        let mut database = vec![0, 10, 5, 0, 0, 0, 0, 0, 0]; // Index 0 unused, A1=10, B1=5, rest are results
+        let mut err = vec![false; 9];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 5, cell2: -1 },  // B1 = 5
+            Ops { opcpde: String::from("CCA"), cell1: 1, cell2: 2 },   // C1 = A1 + B1 = 15
+            Ops { opcpde: String::from("CCS"), cell1: 1, cell2: 2 },   // D1 = A1 - B1 = 5
+            Ops { opcpde: String::from("CCM"), cell1: 1, cell2: 2 },   // E1 = A1 * B1 = 50
+            Ops { opcpde: String::from("CCD"), cell1: 1, cell2: 2 },   // F1 = A1 / B1 = 2
+            Ops { opcpde: String::from("VVM"), cell1: 3, cell2: 4 },   // G1 = 3 * 4 = 12
+            Ops { opcpde: String::from("CVS"), cell1: 1, cell2: 2 }    // H1 = A1 - 2 = 8
+        ];
+        
+        for i in 3..=8 {
+            calc(i, &mut database, &opers, 3, &mut err);
+        }
+        
+        assert_eq!(database[3], 15); // CCA: A1 + B1 = 10 + 5 = 15
+        assert_eq!(database[4], 5);  // CCS: A1 - B1 = 10 - 5 = 5
+        assert_eq!(database[5], 50); // CCM: A1 * B1 = 10 * 5 = 50
+        assert_eq!(database[6], 2);  // CCD: A1 / B1 = 10 / 5 = 2
+        assert_eq!(database[7], 12); // VVM: 3 * 4 = 12
+        assert_eq!(database[8], 8);  // CVS: A1 - 2 = 10 - 2 = 8
+    }
+
+    #[test]
+    fn test_calc_specialized_operations() {
+        let mut database = vec![0, 10, 20, 30, 40, 0, 0]; // Index 0 unused, A1=10, B1=20, C1=30, D1=40
+        let mut err = vec![false; 7];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 20, cell2: -1 }, // B1 = 20
+            Ops { opcpde: String::from("EQV"), cell1: 30, cell2: -1 }, // C1 = 30
+            Ops { opcpde: String::from("EQV"), cell1: 40, cell2: -1 }, // D1 = 40
+            Ops { opcpde: String::from("EQC"), cell1: 3, cell2: -1 },  // E1 = C1 = 30
+            Ops { opcpde: String::from("SLC"), cell1: 1, cell2: -1 }   // F1 = sleep(A1) then A1 = 10
+        ];
+        
+        calc(5, &mut database, &opers, 4, &mut err); // EQC
+        calc(6, &mut database, &opers, 4, &mut err); // SLC (might sleep for 10 seconds)
+        
+        assert_eq!(database[5], 30); // EQC: E1 = C1 = 30
+        assert_eq!(database[6], 10); // SLC: F1 = A1 = 10
+    }
+
+    #[test]
+    fn test_calc_value_combinations() {
+        let mut database = vec![0, 10, 5, 0, 0, 0, 0]; // Index 0 unused
+        let mut err = vec![false; 7];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 5, cell2: -1 },  // B1 = 5
+            Ops { opcpde: String::from("VCA"), cell1: 7, cell2: 1 },   // C1 = 7 + A1 = 17
+            Ops { opcpde: String::from("CVA"), cell1: 2, cell2: 8 },   // D1 = B1 + 8 = 13
+            Ops { opcpde: String::from("VCS"), cell1: 15, cell2: 2 },  // E1 = 15 - B1 = 10
+            Ops { opcpde: String::from("VCD"), cell1: 100, cell2: 1 }  // F1 = 100 / A1 = 10
+        ];
+        
+        for i in 3..=6 {
+            calc(i, &mut database, &opers, 3, &mut err);
+        }
+        
+        assert_eq!(database[3], 17); // VCA: 7 + A1 = 7 + 10 = 17
+        assert_eq!(database[4], 13); // CVA: B1 + 8 = 5 + 8 = 13
+        assert_eq!(database[5], 10); // VCS: 15 - B1 = 15 - 5 = 10
+        assert_eq!(database[6], 10); // VCD: 100 / A1 = 100 / 10 = 10
+    }
+
+    #[test]
+    fn test_calc_statistical_functions() {
+        // Set up a row of cells with values 10, 20, 30, 40, 50
+        let mut database = vec![0, 10, 20, 30, 40, 50, 0, 0, 0, 0, 0]; // Index 0 unused
+        let mut err = vec![false; 11];
+        let len_h = 5; // Width of 5 cells
+        
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 20, cell2: -1 }, // B1 = 20
+            Ops { opcpde: String::from("EQV"), cell1: 30, cell2: -1 }, // C1 = 30
+            Ops { opcpde: String::from("EQV"), cell1: 40, cell2: -1 }, // D1 = 40
+            Ops { opcpde: String::from("EQV"), cell1: 50, cell2: -1 }, // E1 = 50
+            Ops { opcpde: String::from("MIN"), cell1: 1, cell2: 5 }, // F1 = MIN(A1:E1) = 10
+            Ops { opcpde: String::from("MAX"), cell1: 1, cell2: 5 }, // G1 = MAX(A1:E1) = 50
+            Ops { opcpde: String::from("SUM"), cell1: 1, cell2: 5 }, // H1 = SUM(A1:E1) = 150
+            Ops { opcpde: String::from("MEA"), cell1: 1, cell2: 5 }, // I1 = MEA(A1:E1) = 30
+            Ops { opcpde: String::from("STD"), cell1: 1, cell2: 5 }  // J1 = STD(A1:E1)
+        ];
+        
+        // Calculate statistical operations
+        for i in 6..=10 {
+            calc(i, &mut database, &opers, len_h, &mut err);
+        }
+        
+        assert_eq!(database[6], 10);  // MIN(A1:E1) = 10
+        assert_eq!(database[7], 50);  // MAX(A1:E1) = 50
+        assert_eq!(database[8], 150); // SUM(A1:E1) = 150
+        assert_eq!(database[9], 30);  // MEA(A1:E1) = 30
+        
+        // STD calculation should be approximately √((10-30)²+(20-30)²+(30-30)²+(40-30)²+(50-30)²)/5 = √500/5 ≈ 14.14
+        let expected_std = ((400.0 + 100.0 + 0.0 + 100.0 + 400.0) / 5.0 as f32).sqrt() as i32;
+        assert_eq!(database[10], expected_std); // STD(A1:E1) ≈ 14.14 -> 15 (rounded)
+    }
+
+    #[test]
+    fn test_sleep_operations() {
+        let mut database = vec![0, 0, 0];
+        let mut err = vec![false; 3];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("SLV"), cell1: 0, cell2: -1 }, // A1 = Sleep 0s, value 0
+            Ops { opcpde: String::from("SLV"), cell1: 1, cell2: -1 }  // B1 = Sleep 1s, value 1
+        ];
+        
+        // Use a timer to verify it sleeps
+        let start = std::time::Instant::now();
+        calc(1, &mut database, &opers, 2, &mut err);
+        let elapsed_a1 = start.elapsed();
+        
+        let start = std::time::Instant::now();
+        calc(2, &mut database, &opers, 2, &mut err);
+        let elapsed_b1 = start.elapsed();
+        
+        assert_eq!(database[1], 0);
+        assert_eq!(database[2], 1);
+        assert!(elapsed_a1.as_millis() < 100); // A1 should execute quickly
+        assert!(elapsed_b1.as_millis() >= 900); // B1 should sleep ~1 second
+    }
+
+    #[test]
+    fn test_error_handling_in_operations() {
+        let mut database = vec![0, 10, 0, 0, 0, 0];
+        let mut err = vec![false, false, false, false, false, false];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 0, cell2: -1 },  // B1 = 0
+            Ops { opcpde: String::from("CCD"), cell1: 1, cell2: 2 },   // C1 = A1 / B1 = 10 / 0 (error)
+            Ops { opcpde: String::from("VVD"), cell1: 20, cell2: 0 },  // D1 = 20 / 0 (error)
+            Ops { opcpde: String::from("CVA"), cell1: 3, cell2: 5 }    // E1 = C1 + 5 (propagated error)
+        ];
+        
+        for i in 3..=5 {
+            calc(i, &mut database, &opers, 3, &mut err);
+        }
+        
+        assert_eq!(err[3], true); // C1 has error (division by zero)
+        assert_eq!(err[4], true); // D1 has error (direct division by zero)
+        assert_eq!(err[5], true); // E1 has error (derived from C1's error)
+    }
+
+    #[test]
+    fn test_val_update_complex_dependencies() {
+        // Testing a more complex dependency chain: A1 -> B1 -> C1 -> D1
+        let mut database = vec![0, 0, 0, 0, 0]; // Index 0 unused, cells 1-4
+        let mut err = vec![false, false, false, false, false];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 5, cell2: -1 },  // A1 = 5
+            Ops { opcpde: String::from("CVM"), cell1: 1, cell2: 2 },   // B1 = A1 * 2 = 10
+            Ops { opcpde: String::from("CVA"), cell1: 2, cell2: 5 },   // C1 = B1 + 5 = 15
+            Ops { opcpde: String::from("CCM"), cell1: 3, cell2: 1 }    // D1 = C1 * A1 = 15 * 5 = 75
+        ];
+        
+        // Topo order: 1, 2, 3, 4 (A1, B1, C1, D1)
+        let topo_arr = vec![4, 1, 2, 3, 4]; // First element is count, then indices in order
+        
+        val_update(&topo_arr, &mut database, &opers, 4, &mut err);
+        
+        assert_eq!(database[1], 5);   // A1 = 5
+        assert_eq!(database[2], 10);  // B1 = 5 * 2 = 10
+        assert_eq!(database[3], 15);  // C1 = 10 + 5 = 15
+        assert_eq!(database[4], 75);  // D1 = 15 * 5 = 75
+    }
+
+    #[test]
+    fn test_error_propagation() {
+        let mut database = vec![0, 0, 0, 0];
+        let mut err = vec![false, true, false, false]; // A1 has an error
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 },
+            Ops { opcpde: String::from("EQV"), cell1: 5, cell2: -1 },
+            Ops { opcpde: String::from("CCA"), cell1: 1, cell2: 2 } // C1 = A1 + B1, A1 has error
+        ];
+        
+        calc(3, &mut database, &opers, 3, &mut err);
+        assert_eq!(err[3], true); // Error propagates
+    }
+
+    #[test]
+    fn test_division_by_zero() {
+        let mut database = vec![0, 10, 0, 0]; // A1=10, B1=0
+        let mut err = vec![false, false, false, false];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 },
+            Ops { opcpde: String::from("EQV"), cell1: 0, cell2: -1 },
+            Ops { opcpde: String::from("CCD"), cell1: 1, cell2: 2 } // C1 = A1 / B1
+        ];
+        
+        calc(3, &mut database, &opers, 3, &mut err);
+        assert_eq!(err[3], true); // Division by zero causes error
+    }
+
+    #[test]
+    fn test_val_update() {
+        let mut database = vec![0, 0, 0, 0, 0]; // Index 0 unused, cells 1-4
+        let mut err = vec![false, false, false, false, false];
+        let opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }, // Unused
+            Ops { opcpde: String::from("EQV"), cell1: 10, cell2: -1 }, // A1 = 10
+            Ops { opcpde: String::from("EQV"), cell1: 5, cell2: -1 },  // B1 = 5
+            Ops { opcpde: String::from("CCA"), cell1: 1, cell2: 2 },   // C1 = A1 + B1
+            Ops { opcpde: String::from("CCM"), cell1: 3, cell2: 1 }    // D1 = C1 * A1
+        ];
+        
+        // Topo order: 1, 2, 3, 4 (A1, B1, C1, D1)
+        let topo_arr = vec![4, 1, 2, 3, 4]; // First element is count, then indices in order
+        
+        val_update(&topo_arr, &mut database, &opers, 4, &mut err);
+        
+        assert_eq!(database[1], 10); // A1 = 10
+        assert_eq!(database[2], 5);  // B1 = 5
+        assert_eq!(database[3], 15); // C1 = 10 + 5 = 15
+        assert_eq!(database[4], 150); // D1 = 15 * 10 = 150
+    }
+
+    #[test]
+    fn test_cell_update_simple() {
+        let mut database = vec![0, 0, 0, 0];
+        let mut err = vec![false, false, false, false];
+        let mut opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }
+        ];
+        let mut sensi = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+        let mut indegree = vec![0, 0, 0, 0];
+        
+        // Set A1 to 10
+        let inp_arr = vec![
+            String::from("A1"), // Cell
+            String::from("EQV"), // Operation
+            String::from("10"), // Value 1
+            String::from("0")   // Value 2
+        ];
+        
+        let result = cell_update(&inp_arr, &mut database, &mut sensi, &mut opers, 2, &mut indegree, &mut err);
+        
+        assert_eq!(result, 1); // Update successful
+        assert_eq!(database[1], 10); // A1 = 10
+        assert_eq!(err[1], false); // No error
+    }
+
+    #[test]
+    fn test_cell_update_with_dependencies() {
+        let mut database = vec![0, 0, 0, 0];
+        let mut err = vec![false, false, false, false];
+        let mut opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }
+        ];
+        let mut sensi = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+        let mut indegree = vec![0, 0, 0, 0];
+        
+        // Set A1 to 10
+        let inp_arr1 = vec![
+            String::from("A1"),
+            String::from("EQV"),
+            String::from("10"),
+            String::from("0")
+        ];
+        
+        // Set B1 to 5
+        let inp_arr2 = vec![
+            String::from("B1"),
+            String::from("EQV"),
+            String::from("5"),
+            String::from("0")
+        ];
+        
+        // Set C1 to A1 + B1
+        let inp_arr3 = vec![
+            String::from("C1"),
+            String::from("CCA"),
+            String::from("A1"),
+            String::from("B1")
+        ];
+        
+        cell_update(&inp_arr1, &mut database, &mut sensi, &mut opers, 3, &mut indegree, &mut err);
+        cell_update(&inp_arr2, &mut database, &mut sensi, &mut opers, 3, &mut indegree, &mut err);
+        let result = cell_update(&inp_arr3, &mut database, &mut sensi, &mut opers, 3, &mut indegree, &mut err);
+        
+        assert_eq!(result, 1); // Update successful
+        assert_eq!(database[3], 15); // C1 = A1 + B1 = 10 + 5 = 15
+        
+        // Now update A1 and check if C1 updates
+        let inp_arr4 = vec![
+            String::from("A1"),
+            String::from("EQV"),
+            String::from("20"),
+            String::from("0")
+        ];
+        
+        cell_update(&inp_arr4, &mut database, &mut sensi, &mut opers, 3, &mut indegree, &mut err);
+        assert_eq!(database[1], 20); // A1 = 20
+        assert_eq!(database[3], 25); // C1 = A1 + B1 = 20 + 5 = 25
+    }
+
+    #[test]
+    fn test_cell_update_cycle_detection() {
+        let mut database = vec![0, 0, 0, 0];
+        let mut err = vec![false, false, false, false];
+        let mut opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 },
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }
+        ];
+        let mut sensi = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+        let mut indegree = vec![0, 0, 0, 0];
+        
+        // Set A1 to B1 + 1
+        let inp_arr1 = vec![
+            String::from("A1"),
+            String::from("CVA"),
+            String::from("B1"),
+            String::from("1")
+        ];
+        
+        // Set B1 to A1 + 1 (creates cycle)
+        let inp_arr2 = vec![
+            String::from("B1"),
+            String::from("CVA"),
+            String::from("A1"),
+            String::from("1")
+        ];
+        
+        let result1 = cell_update(&inp_arr1, &mut database, &mut sensi, &mut opers, 3, &mut indegree, &mut err);
+        let result2 = cell_update(&inp_arr2, &mut database, &mut sensi, &mut opers, 3, &mut indegree, &mut err);
+        
+        assert_eq!(result1, 1); // First update is fine
+        assert_eq!(result2, 0); // Second update creates cycle, should return 0
+    }
+
+    #[test]
+    fn test_range_operations() {
+        let mut database = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // Cells 1-9 with values 1-9
+        let mut err = vec![false; 10];
+        let mut opers = vec![
+            Ops { opcpde: String::new(), cell1: -1, cell2: -1 }; 10
+        ];
+        let mut sensi = vec![Vec::new(); 10];
+        let mut indegree = vec![0; 10];
+        
+        // Initialize cells with values
+        for i in 1..9 {
+            let inp_arr = vec![
+                format!("A{}", i),
+                String::from("EQV"),
+                format!("{}", i),
+                String::from("0")
+            ];
+            cell_update(&inp_arr, &mut database, &mut sensi, &mut opers, 1, &mut indegree, &mut err);
+        }
+        
+        // Set A9 to SUM of range A1:A8
+        let inp_arr = vec![
+            String::from("A9"),
+            String::from("SUM"),
+            String::from("A1"),
+            String::from("A8")
+        ];
+        
+        let result = cell_update(&inp_arr, &mut database, &mut sensi, &mut opers, 1, &mut indegree, &mut err);
+        
+        assert_eq!(result, 1); // Update successful
+        assert_eq!(database[9], 36); 
+        
+        // Change A1 and check if A9 updates
+        let inp_arr_update = vec![
+            String::from("A1"),
+            String::from("EQV"),
+            String::from("10"),
+            String::from("0")
+        ];
+        
+        cell_update(&inp_arr_update, &mut database, &mut sensi, &mut opers, 1, &mut indegree, &mut err);
+        assert_eq!(database[1], 10); // A1 = 10
+        assert_eq!(database[9], 45); 
+
+        // Update A9 to sum only A1:A5 instead of A1:A8
+        let inp_arr_range_update = vec![
+            String::from("A9"),
+            String::from("SUM"),
+            String::from("A1"),
+            String::from("A5")
+        ];
+
+        cell_update(&inp_arr_range_update, &mut database, &mut sensi, &mut opers, 1, &mut indegree, &mut err);
+        assert_eq!(database[9], 24); // Sum of (10+2+3+4+5) = 24
+
+        // Make sure updating a cell outside the new range doesn't affect the sum
+        let inp_arr_out_of_range = vec![
+            String::from("A8"),
+            String::from("EQV"),
+            String::from("100"),
+            String::from("0")
+        ];
+
+        cell_update(&inp_arr_out_of_range, &mut database, &mut sensi, &mut opers, 1, &mut indegree, &mut err);
+        assert_eq!(database[8], 100); // A8 = 100
+        assert_eq!(database[9], 24); // Sum remains unchanged as A8 is outside the range
+    }
+
+    
+}
+

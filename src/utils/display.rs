@@ -99,3 +99,83 @@ pub fn display_grid(
         println!();
     }
 }
+
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_shift_char() {
+        // Basic shift cases
+        assert_eq!(shift_char('A', 0), 'A');
+        assert_eq!(shift_char('A', 1), 'B');
+        assert_eq!(shift_char('A', 25), 'Z');
+        
+        // Edge cases
+        assert_eq!(shift_char('Z', 1), '['); // ASCII value after 'Z'
+        assert_eq!(shift_char('A', -1), '@'); // ASCII value before 'A'
+    }
+
+    #[test]
+    fn test_get_label_single_letter() {
+        // Single letter cases (1-26)
+        assert_eq!(get_label(1), "A");
+        assert_eq!(get_label(2), "B");
+        assert_eq!(get_label(26), "Z");
+    }
+
+    #[test]
+    fn test_get_label_double_letter() {
+        // Double letter cases (27-702)
+        assert_eq!(get_label(27), "AA");
+        assert_eq!(get_label(28), "AB");
+        assert_eq!(get_label(52), "AZ");
+        assert_eq!(get_label(53), "BA");
+        assert_eq!(get_label(702), "ZZ");
+    }
+
+
+    #[test]
+    fn test_get_label_triple_letter() {
+        // Triple letter cases (703-18277)
+        assert_eq!(get_label(703), "AAA");
+        assert_eq!(get_label(704), "AAB");
+        assert_eq!(get_label(728), "AAZ");
+        assert_eq!(get_label(729), "ABA");
+        assert_eq!(get_label(18278), "ZZZ");
+    }
+
+    #[test]
+    fn test_get_label_boundary_cases() {
+        // Test boundary cases between different label lengths
+        assert_eq!(get_label(26), "Z");
+        assert_eq!(get_label(27), "AA");
+        assert_eq!(get_label(702), "ZZ");
+        assert_eq!(get_label(703), "AAA");
+        
+    }
+
+    
+        
+    #[test]
+    fn test_display_grid() {
+        
+        // Create a small test dataset
+        let len_h = 3;
+        let len_v = 3;
+        let database = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let mut err = vec![false; 10];
+        err[4] = true; // Mark element at position (2,2) as error
+        
+        display_grid(1, 1, len_h, len_v, &database, &err);
+        assert!(true); // If no panic occurs 
+
+    }
+    
+
+
+
+
+}
