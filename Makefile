@@ -1,7 +1,7 @@
 all:
 	cargo build --release
 
-build:
+test:
 	cargo test
 
 coverage:
