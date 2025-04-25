@@ -870,7 +870,7 @@ mod tests {
 
         calc(3, &mut database, &opers, 3, &mut err);
         assert_eq!(database[3], 10); // 7 + 3 = 10
-        assert_eq!(err[3], false);
+        assert!(!err[3]);
     }
 
     #[test]
@@ -1114,7 +1114,7 @@ mod tests {
         assert_eq!(database[9], 30); // MEA(A1:E1) = 30
 
         // STD calculation should be approximately √((10-30)²+(20-30)²+(30-30)²+(40-30)²+(50-30)²)/5 = √500/5 ≈ 14.14
-        let expected_std = ((400.0 + 100.0 + 0.0 + 100.0 + 400.0) / 5.0 as f32).sqrt() as i32;
+        let expected_std = ((400.0 + 100.0 + 0.0 + 100.0 + 400.0) / 5.0_f32).sqrt() as i32;
         assert_eq!(database[10], expected_std); // STD(A1:E1) ≈ 14.14 -> 15 (rounded)
     }
 
@@ -1196,9 +1196,9 @@ mod tests {
             calc(i, &mut database, &opers, 3, &mut err);
         }
 
-        assert_eq!(err[3], true); // C1 has error (division by zero)
-        assert_eq!(err[4], true); // D1 has error (direct division by zero)
-        assert_eq!(err[5], true); // E1 has error (derived from C1's error)
+        assert!(err[3]); // C1 has error (division by zero)
+        assert!(err[4]); // D1 has error (direct division by zero)
+        assert!(err[5]); // E1 has error (derived from C1's error)
     }
 
     #[test]
@@ -1273,7 +1273,7 @@ mod tests {
         ];
 
         calc(3, &mut database, &opers, 3, &mut err);
-        assert_eq!(err[3], true); // Error propagates
+        assert!(err[3]); // Error propagates
     }
 
     #[test]
@@ -1304,7 +1304,7 @@ mod tests {
         ];
 
         calc(3, &mut database, &opers, 3, &mut err);
-        assert_eq!(err[3], true); // Division by zero causes error
+        assert!(err[3]); // Division by zero causes error
     }
 
     #[test]
@@ -1399,7 +1399,7 @@ mod tests {
 
         assert_eq!(result, 1); // Update successful
         assert_eq!(database[1], 10); // A1 = 10
-        assert_eq!(err[1], false); // No error
+        assert!(!err[1]); // No error
     }
 
     #[test]
@@ -1710,7 +1710,7 @@ mod tests {
         let mut status;
 
         // Create a series of complex updates to test the spreadsheet functionality
-        let test_inputs = vec![
+        let test_inputs = [
             "A1=SUM(B1:B4)",
             "A1=MIN(B2:B8)",
             "A1=1",
@@ -1763,7 +1763,7 @@ mod tests {
         let mut status;
 
         // Create a series of complex updates to test the spreadsheet functionality
-        let test_inputs = vec!["A1=A2", "A1=MAX(B2:B8)", "A1=A2", "A1=MIN(B2:B8)", "A1=A1"];
+        let test_inputs = ["A1=A2", "A1=MAX(B2:B8)", "A1=A2", "A1=MIN(B2:B8)", "A1=A1"];
 
         // Process each test input
         for (i, input) in test_inputs.iter().enumerate() {
@@ -1810,7 +1810,7 @@ mod tests {
         let mut status;
 
         // Create a series of complex updates to test the spreadsheet functionality
-        let test_inputs = vec!["A1=MAX(B2:B8)", "A1=MAX(A1:B5)"];
+        let test_inputs = ["A1=MAX(B2:B8)", "A1=MAX(A1:B5)"];
 
         // Process each test input
         for (i, input) in test_inputs.iter().enumerate() {

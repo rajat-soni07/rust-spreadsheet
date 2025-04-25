@@ -185,11 +185,9 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
         } else if vec2.contains(&(output[1].as_str())) {
             let f = output[1].chars().next().unwrap();
             let s = output[1].chars().nth(1).unwrap();
-            if f == 'C' {
-                if !is_valid_cell(&output[2], len_h, len_v) {
-                    message = String::from("Invalid Cell");
-                    return message;
-                }
+            if f == 'C' && !is_valid_cell(&output[2], len_h, len_v) {
+                message = String::from("Invalid Cell");
+                return message;
             }
 
             if s == 'C' {

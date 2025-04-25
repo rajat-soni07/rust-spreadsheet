@@ -21,6 +21,7 @@ fn shift_char(c: char, i: i32) -> char {
 /// - 1 to 26 maps to A to Z
 /// - 27 to 702 maps to AA to ZZ
 /// - 703 to 18277 maps to AAA to ZZZ
+///
 /// The function handles the conversion by calculating the appropriate letters based on the integer value.
 /// The function uses a helper function `shift_char` to perform the character shifting.
 /// The function returns a string representing the label.
@@ -162,6 +163,5 @@ mod tests {
         err[4] = true; // Mark element at position (2,2) as error
 
         display_grid(1, 1, len_h, len_v, &database, &err);
-        assert!(true); // If no panic occurs 
     }
 }
