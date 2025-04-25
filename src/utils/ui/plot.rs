@@ -1,5 +1,21 @@
+//! Data visualization utilities for the spreadsheet application.
+//!
+//! This module provides functions to create visual representations of spreadsheet data
+//! using the plotters library. It supports different plot types including scatter plots
+//! and line plots with automatic axis scaling.
 use plotters::prelude::*;
 
+/// Calculates appropriate axis ranges for a data series.
+///
+/// This function automatically determines suitable x and y axis ranges based on the 
+/// provided data points, adding margins around the data for better visualization.
+///
+/// # Arguments
+/// * `data` - Slice of (x, y) coordinate pairs to analyze
+///
+/// # Returns
+/// A tuple of (x_range, y_range) where each range is a `std::ops::Range<f64>`.
+/// suitable for use with plotters
 fn auto_range(data: &[(f64, f64)]) -> (std::ops::Range<f64>, std::ops::Range<f64>) {
     let (min_x, max_x) = data
         .iter()
@@ -31,6 +47,17 @@ fn auto_range(data: &[(f64, f64)]) -> (std::ops::Range<f64>, std::ops::Range<f64
     (x_range, y_range)
 }
 
+/// Creates a scatter plot from a set of data points and saves it to a file.
+///
+/// This function generates a scatter plot where each data point is rendered as 
+/// a separate circle. It automatically scales the axes to fit the data.
+///
+/// # Arguments
+/// * `data` - Slice of (x, y) coordinate pairs to plot
+/// * `path` - Path where the plot image will be saved
+///
+/// # Returns
+/// `Ok(())` if the operation was successful, or an error otherwise
 pub fn scatter_plot(data: &[(f64, f64)], path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new(path, (800, 600)).into_drawing_area();
     root.fill(&WHITE)?;
@@ -59,6 +86,18 @@ pub fn scatter_plot(data: &[(f64, f64)], path: &str) -> Result<(), Box<dyn std::
     Ok(())
 }
 
+/// Creates a line plot from a set of data points and saves it to a file.
+///
+/// This function generates a line plot where data points are connected with lines
+/// and each point is marked with a small circle. It automatically scales the axes
+/// to fit the data.
+///
+/// # Arguments
+/// * `data` - Slice of (x, y) coordinate pairs to plot
+/// * `path` - Path where the plot image will be saved
+///
+/// # Returns
+/// `Ok(())` if the operation was successful, or an error otherwise
 pub fn line_plot(data: &[(f64, f64)], path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new(path, (800, 600)).into_drawing_area();
     root.fill(&WHITE)?;
