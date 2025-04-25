@@ -211,7 +211,7 @@ fn check_err(input: &str, output: &[String], len_h: i32, len_v: i32) -> String {
 /// Strings of length 3 to determine type of operation:
 /// 
 /// ## Arithmetic Operations
-/// Format: [Operand1Type][Operand2Type][OperationType]
+/// Format: Operand1Type Operand2Type OperationType
 /// - Operand types:
 ///   - 'C': Cell reference (e.g., 'A1')
 ///   - 'V': Value (integer)
